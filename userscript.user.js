@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.4_1
+// @version      0.5
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -239,7 +239,8 @@ class Utilities {
         for (; this.fps.times.length > 0 && this.fps.times[0] <= now - 1e3;) this.fps.times.shift();
         this.fps.times.push(now);
         this.fps.cur = this.fps.times.length;
-        this.text(`FPS: ${this.fps.cur}`, `${this.settings.fpsFontSize}px GameFont`, this.fps.cur > 50 ? 'green' : (this.fps.cur < 30 ? 'red' : 'orange'), 20, 8 + this.settings.fpsFontSize);
+        this.text(this.fps.cur, `${this.settings.fpsFontSize}px GameFont`, this.fps.cur > 50 ? 'green' : (this.fps.cur < 30 ? 'red' : 'orange'), 20, 8 + this.settings.fpsFontSize);
+        this.text("Krunker Utilities", `7px GameFont`, "rgba(255,255,255, 0.3)", this.canvas.width - 100, 15);
     }
 
     drawCrosshair() {
