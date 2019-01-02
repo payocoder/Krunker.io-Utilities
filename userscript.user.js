@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.1
+// @version      0.2
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -60,7 +60,7 @@ class Utilities {
         this.settingsMenu = {
             fpsCounter: {
                 name: "Show FPS",
-                pre: "<div class='setHed'><center>Utilities Settings</center></div><div class='setHed'>Render</div>",
+                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Render</div>",
                 val: 1,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("fpsCounter", this.checked)' ${self.settingsMenu.fpsCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
@@ -165,6 +165,7 @@ class Utilities {
 
     keyDown(event) {
         if (document.activeElement.id === 'chatInput') return;
+        if (event.keyCode === 9) window.showWindow(window.windows.length - 1);
     }
 
     keyUp(event) {
@@ -172,7 +173,6 @@ class Utilities {
     }
 
     keyPress(event) {
-        return; // will be used later
         if (document.activeElement.id === 'chatInput') return;
     }
 
@@ -279,9 +279,10 @@ GM_xmlhttpRequest({
     method: "GET",
     url: `${document.location.origin}/js/game.js`,
     onload: res => {
-        let code = res.responseText
+        let code = res.responseText;
+        let game = /=(.)\.store\.purchases/.exec(code)[1];
         code = code.replace(/String\.prototype\.escape=function\(\){(.*)\)},(Number\.)/, "$2")
-            .replace(/window\.updateWindow=function/, 'windows.push({header: "Utilities", html: "",gen: function () {var t = ""; for (var key in window.utilities.settingsMenu) {window.utilities.settingsMenu[key].pre && (t += window.utilities.settingsMenu[key].pre), t += "<div class=\'settName\'>" + window.utilities.settingsMenu[key].name + " " + window.utilities.settingsMenu[key].html() + "</div>";} return t;}});window.utilities.setupSettings();\nwindow.updateWindow=function')
+            .replace(/window\.updateWindow=function/, 'windows.push({header:"Player List",gen:function(){var t="<div style=\'margin-top:0px\' class=\'setHed\'><center>Player List</center></div><div class=\'settNameSmall\'><span class=\'floatR\'>Host Only</span></div>";for(let p of ' + game + '.players.list){t+="<div class=\'settName\'>"+p.name+(!p.isYou?"<span class=\'floatR\'><span id=\'kick\' class=\'settText\' onclick=\'userAction(0, &quot;"+p.id+"&quot;)\'>Kick</span> | <span id=\'ban\' class=\'settText\' onclick=\'userAction(1, &quot;"+p.id+"&quot;)\'>Ban</span></span>":"")+"</div>";}return t;}});windows.push({header: "Utilities", html: "",gen: function () {var t = ""; for (var key in window.utilities.settingsMenu) {window.utilities.settingsMenu[key].pre && (t += window.utilities.settingsMenu[key].pre), t += "<div class=\'settName\'>" + window.utilities.settingsMenu[key].name + " " + window.utilities.settingsMenu[key].html() + "</div>";} return t;}});window.utilities.setupSettings();\nwindow.updateWindow=function')
             .replace(/window\.addEventListener\("keydown",function\((\w+)\){/, 'window.addEventListener("keydown",function($1){window.utilities.keyDown($1),')
             .replace(/window\.addEventListener\("keyup",function\((\w+)\){/, 'window.addEventListener("keyup",function($1){window.utilities.keyUp($1),')
             .replace(/window\.addEventListener\("keypress",function\((\w+)\){/, 'window.addEventListener("keypress",function($1){window.utilities.keyPress($1),')
