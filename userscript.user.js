@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.5
+// @version      0.6
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -20,7 +20,8 @@ class Utilities {
         this.camera = null;
         this.inputs = null;
         this.game = null;
-        this.customMatch = false;
+        this.isCustom = false;
+        this.isHost = false;
         this.hooks = {
             socket: null,
         };
@@ -42,7 +43,9 @@ class Utilities {
             customCrosshairLength: 14,
             customCrosshairThickness: 2,
             customCrosshairOutline: 0,
+            customCrosshairOutlineColor: "#000000",
             antiGuest: false,
+            chat: true,
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -68,9 +71,21 @@ class Utilities {
         rh.insertAdjacentHTML("beforeend", "<br/><a href='javascript:;' onmouseover=\"SOUND.play('tick_0',0.1)\" onclick='showWindow(window.windows.length);' class=\"menuLink\">Utilities</a>");
         let self = this;
         this.settingsMenu = {
+            chat: {
+                name: "Show Chat",
+                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Interface</div>",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("chat", this.checked)' ${self.settingsMenu.chat.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.chat = t;
+                    window.chatUI.style.display = t ? "block" : "none"
+                }
+            },
             fpsCounter: {
                 name: "Show FPS",
-                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Render</div>",
+                pre: "<div class='setHed'>Render</div>",
                 val: 1,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("fpsCounter", this.checked)' ${self.settingsMenu.fpsCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
@@ -157,6 +172,16 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customCrosshairOutline = parseInt(t);
+                }
+            },
+            customCrosshairOutlineColor: {
+                name: "Outline Color",
+                val: "#000000",
+                html() {
+                    return `<input type='color' id='crosshairOutlineColor' name='color' value='${self.settingsMenu.customCrosshairOutlineColor.val}' oninput='window.utilities.setSetting("customCrosshairOutlineColor", this.value)' style='float:right;margin-top:5px'/>` 
+                },
+                set(t) {
+                    self.settings.customCrosshairOutlineColor = t;
                 }
             },
             antiGuest: {
@@ -254,8 +279,8 @@ class Utilities {
         let cy = (this.canvas.height / 2);
 
         if (outline > 0) {
-            this.rect(cx - length - outline, cy - (thickness / 2) - outline, 0, 0, (length * 2) + (outline * 2), thickness + (outline * 2), '#000000', true);
-            this.rect(cx - (thickness * 0.50) - outline, cy - length - outline, 0, 0, thickness + (outline * 2), (length * 2) + (outline * 2), '#000000', true);
+            this.rect(cx - length - outline, cy - (thickness / 2) - outline, 0, 0, (length * 2) + (outline * 2), thickness + (outline * 2), this.settings.customCrosshairOutlineColor, true);
+            this.rect(cx - (thickness * 0.50) - outline, cy - length - outline, 0, 0, thickness + (outline * 2), (length * 2) + (outline * 2), this.settings.customCrosshairOutlineColor, true);
         }
 
         this.rect(cx - length, cy - (thickness / 2), 0, 0, (length * 2) , thickness, this.settings.customCrosshairColor, true);
@@ -280,15 +305,19 @@ class Utilities {
     }
     
     autoBan() {
-        if (!this.customMatch) return
+        if (!this.isHost) return;
         let autoBan = this.game.players.list.filter(p => this.banList.includes(p.name));
         for (let player of autoBan) {
             this.hooks.socket.send("c", "/ban " + player.name)
         }
     }
     
+    resetBanList() {
+        this.banList = [];
+    }
+    
     antiGuest() {
-        if (!this.customMatch) return
+        if (!this.isHost) return;
         if (!this.settings.antiGuest) return;
         
         let guests = this.game.players.list.filter(p => p.name.match(/Guest_([0-9]{1}|1[0-5])$/));
@@ -313,7 +342,7 @@ class Utilities {
         this.autoBan();
         this.antiGuest();
         
-        if (!this.customMatch) this.banList = [];
+        if (!this.isHost) this.banList = [];
     }
 
     setSetting(t, e) {
@@ -348,7 +377,7 @@ GM_xmlhttpRequest({
         let sock = /return (.)\.send\("getMaps"\)/.exec(code)[1];
         code = code.replace(/String\.prototype\.escape=function\(\){(.*)\)},(Number\.)/, "$2")
             .replace(/(\w+).procInputs\((\w+),(\w+)\),(\w+).moveCam/, 'window.utilities.loop($4, $1, $2, $3), $1.procInputs($2,$3),$4.moveCam')
-            .replace(/window\.updateWindow=function/, 'windows.push({header:"Player List",gen:function(){var t="<div style=\'margin-top:0px\' class=\'setHed\'><center>Player List</center></div><div class=\'settNameSmall\'><span class=\'floatR\'>Host Only</span></div>";for(let p of ' + game + '.players.list){t+="<div class=\'settName\'>"+p.name+(!p.isYou && window.utilities.customMatch?"<span class=\'floatR\'><span id=\'kick\' class=\'settText\' onclick=\'userAction(0, &quot;"+p.id+"&quot;)\'>Kick</span> | <span id=\'ban\' class=\'settText\' onclick=\'userAction(1, &quot;"+p.id+"&quot;)\'>Ban</span></span>":"")+"</div>";}return t;}});windows.push({header: "Utilities", html: "",gen: function () {var t = ""; for (var key in window.utilities.settingsMenu) {window.utilities.settingsMenu[key].pre && (t += window.utilities.settingsMenu[key].pre), t += "<div class=\'settName\'>" + window.utilities.settingsMenu[key].name + " " + window.utilities.settingsMenu[key].html() + "</div>";} return t;}});window.utilities.setupSettings();\nwindow.updateWindow=function')
+            .replace(/window\.updateWindow=function/, 'windows.push({header:"Player List",gen:function(){var t="<div style=\'margin-top:0px\' class=\'setHed\'><center>Player List</center></div><div class=\'settNameSmall\'><span class=\'floatR\'>Host Only</span></div>";for(let p of ' + game + '.players.list){t+="<div class=\'settName\'>"+p.name+(!p.isYou && window.utilities.isHost?"<span class=\'floatR\'><span id=\'kick\' class=\'settText\' onclick=\'userAction(0, &quot;"+p.id+"&quot;)\'>Kick</span> | <span id=\'ban\' class=\'settText\' onclick=\'userAction(1, &quot;"+p.id+"&quot;)\'>Ban</span></span>":"")+"</div>";}t+=window.utilities.isHost?"<div class=\'settNameSmall\'><span class=\'settText\' onclick=\'window.utilities.resetBanList();\'><center>Reset Ban List</center></span></div>":"";return t;}});windows.push({header: "Utilities", html: "",gen: function () {var t = ""; for (var key in window.utilities.settingsMenu) {window.utilities.settingsMenu[key].pre && (t += window.utilities.settingsMenu[key].pre), t += "<div class=\'settName\'>" + window.utilities.settingsMenu[key].name + " " + window.utilities.settingsMenu[key].html() + "</div>";} return t;}});window.utilities.setupSettings();\nwindow.updateWindow=function')
             .replace(/window\.windows=/, 'window.userAction = function(type = 0, id) {let user = ' + game + '.players.list.filter(x => x.id == id);if(user){user = user[0];if(type==1)window.utilities.banList.push(user.name);' + sock + '.send("c", "/" + (type == 0 ? "kick" : "ban") + " " + user.name);}},window.windows =')
             .replace(/window\.addEventListener\("keydown",function\((\w+)\){/, 'window.addEventListener("keydown",function($1){window.utilities.keyDown($1),')
             .replace(/window\.addEventListener\("keyup",function\((\w+)\){/, 'window.addEventListener("keyup",function($1){window.utilities.keyUp($1),')
@@ -361,7 +390,8 @@ GM_xmlhttpRequest({
             .replace(/crosshair\.style\.opacity\=(\w+)\)/, 'crosshair.style.opacity = window.utilities.crosshairOpacity($1))')
             .replace(/\((\w+).timePlayed\)\+"/, '($1.timePlayed)+"</span></div><div class=\'settName\'>Skins<span class=\'floatR\'>"+window.utilities.countSkins($1)+"')
             .replace(/if\(!this\.socket\){/, 'if(!this.socket){window.utilities.hooks.socket = this;')
-            .replace(/(if\((\w+)\?(\w+).data)/, 'window.utilities.customMatch = $2;$1')
+            .replace(/(if\((\w+)\?(\w+).data)/, 'window.utilities.isCustom = $2;$1')
+            .replace(/(hostGameMsg.innerHTML="Please wait\.\.\.")/, '$1,window.utilities.isHost=true;')
             .replace(/setTimeout\(\(\)=>{!(.*)},2500\);/, '');
         GM_xmlhttpRequest({
             method: "GET",
