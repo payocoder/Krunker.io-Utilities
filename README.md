@@ -3,6 +3,10 @@
 ### Features:
 - FPS Display
 - Custom Crosshair (and other settings)
+- Player List (can kick and ban players) (open by pressing tab)
+- Anti Guest (It will auto kick guests if your host & enabled)
+- Auto Ban (Since banning isnt working properly this will keep banning whoever you banned using the player list) 
+- Skin Count Display (Shows Unique Skins & Duplicates in the Accounts tab)
 - More Coming soon
 
 
