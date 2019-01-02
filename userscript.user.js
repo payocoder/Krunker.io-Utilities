@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.4
+// @version      0.4_1
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -360,7 +360,7 @@ GM_xmlhttpRequest({
             .replace(/crosshair\.style\.opacity\=(\w+)\)/, 'crosshair.style.opacity = window.utilities.crosshairOpacity($1))')
             .replace(/\((\w+).timePlayed\)\+"/, '($1.timePlayed)+"</span></div><div class=\'settName\'>Skins<span class=\'floatR\'>"+window.utilities.countSkins($1)+"')
             .replace(/if\(!this\.socket\){/, 'if(!this.socket){window.utilities.hooks.socket = this;')
-            .replace(/(if \((\w+) \? (\w+).data)/, 'window.utilities.customMatch = $2;$1')
+            .replace(/(if\((\w+)\?(\w+).data)/, 'window.utilities.customMatch = $2;$1')
             .replace(/setTimeout\(\(\)=>{!(.*)},2500\);/, '');
         GM_xmlhttpRequest({
             method: "GET",
