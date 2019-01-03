@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.6
+// @version      0.7
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -39,6 +39,7 @@ class Utilities {
             antiAlias: false,
             highPrecision: false,
             customCrosshair: 0,
+            customCrosshairShape: 0,
             customCrosshairColor: "#FFFFFF",
             customCrosshairLength: 14,
             customCrosshairThickness: 2,
@@ -71,21 +72,9 @@ class Utilities {
         rh.insertAdjacentHTML("beforeend", "<br/><a href='javascript:;' onmouseover=\"SOUND.play('tick_0',0.1)\" onclick='showWindow(window.windows.length);' class=\"menuLink\">Utilities</a>");
         let self = this;
         this.settingsMenu = {
-            chat: {
-                name: "Show Chat",
-                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Interface</div>",
-                val: 1,
-                html() {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("chat", this.checked)' ${self.settingsMenu.chat.val ? "checked" : ""}><span class='slider'></span></label>`;
-                },
-                set(t) {
-                    self.settings.chat = t;
-                    window.chatUI.style.display = t ? "block" : "none"
-                }
-            },
             fpsCounter: {
                 name: "Show FPS",
-                pre: "<div class='setHed'>Render</div>",
+                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Render</div>",
                 val: 1,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("fpsCounter", this.checked)' ${self.settingsMenu.fpsCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
@@ -98,7 +87,7 @@ class Utilities {
                 name: "FPS Font Size",
                 val: 10,
                 html() {
-                    return `<select onchange="window.utilities.setSetting('fpsFontSize', this.value)">
+                    return `<select class="floatR" onchange="window.utilities.setSetting('fpsFontSize', this.value)">
                     <option value="10"${self.settingsMenu.fpsFontSize.val == 10 ? " selected" : ""}>Small</option>
                     <option value="14"${self.settingsMenu.fpsFontSize.val == 14 ? " selected" : ""}>Medium</option>
                     <option value="20"${self.settingsMenu.fpsFontSize.val == 20 ? " selected" : ""}>Large</option>
@@ -120,11 +109,11 @@ class Utilities {
                 }
             },
             customCrosshair: {
-                name: "Crosshair Style",
+                name: "Style",
                 pre: "<div class='setHed'>Custom Crosshair</div>",
                 val: 0,
                 html() {
-                    return `<select onchange="window.utilities.setSetting('customCrosshair', this.value)">
+                    return `<select class="floatR" onchange="window.utilities.setSetting('customCrosshair', this.value)">
                     <option value="0"${self.settingsMenu.customCrosshair.val == 0 ? " selected" : ""}>Original</option>
                     <option value="1"${self.settingsMenu.customCrosshair.val == 1 ? " selected" : ""}>Custom</option>
                     <option value="2"${self.settingsMenu.customCrosshair.val == 2 ? " selected" : ""}>Both</option>
@@ -132,6 +121,19 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customCrosshair = parseInt(t);
+                }
+            },
+            customCrosshairShape: {
+                name: "Shape",
+                val: 0,
+                html() {
+                    return `<select class="floatR" onchange="window.utilities.setSetting('customCrosshairShape', this.value)">
+                    <option value="0"${self.settingsMenu.customCrosshairShape.val == 0 ? " selected" : ""}>Cross</option>
+                    <option value="1"${self.settingsMenu.customCrosshairShape.val == 1 ? " selected" : ""}>Circle</option>
+                    </select>`
+                },
+                set(t) {
+                    self.settings.customCrosshairShape = parseInt(t);
                 }
             },
             customCrosshairColor: {
@@ -193,6 +195,18 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.antiGuest = t;
+                }
+            },
+            chat: {
+                name: "Show Chat",
+                pre: "<div class='setHed'>Interface</div>",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("chat", this.checked)' ${self.settingsMenu.chat.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.chat = t;
+                    window.chatUI.style.display = t ? "block" : "none"
                 }
             },
         };
@@ -257,6 +271,17 @@ class Utilities {
         this.ctx.closePath();
         this.ctx.restore();
     }
+    
+    circle(x, y, r, w, color) {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.lineWidth = w;
+        this.ctx.strokeStyle = color;
+        this.ctx.arc(x, y, r, 0, 2 * Math.PI);
+        this.ctx.stroke();
+        this.ctx.closePath();
+        this.ctx.restore();
+    }
 
     drawFPS() {
         if (!this.settings.fpsCounter) return;
@@ -278,13 +303,18 @@ class Utilities {
         let cx = (this.canvas.width / 2);
         let cy = (this.canvas.height / 2);
 
-        if (outline > 0) {
-            this.rect(cx - length - outline, cy - (thickness / 2) - outline, 0, 0, (length * 2) + (outline * 2), thickness + (outline * 2), this.settings.customCrosshairOutlineColor, true);
-            this.rect(cx - (thickness * 0.50) - outline, cy - length - outline, 0, 0, thickness + (outline * 2), (length * 2) + (outline * 2), this.settings.customCrosshairOutlineColor, true);
+        if (this.settings.customCrosshairShape == 0) {
+            if (outline > 0) {
+                this.rect(cx - length - outline, cy - (thickness / 2) - outline, 0, 0, (length * 2) + (outline * 2), thickness + (outline * 2), this.settings.customCrosshairOutlineColor, true);
+                this.rect(cx - (thickness * 0.50) - outline, cy - length - outline, 0, 0, thickness + (outline * 2), (length * 2) + (outline * 2), this.settings.customCrosshairOutlineColor, true);
+            }
+            
+            this.rect(cx - length, cy - (thickness / 2), 0, 0, (length * 2) , thickness, this.settings.customCrosshairColor, true);
+            this.rect(cx - (thickness * 0.50), cy - length, 0, 0, thickness, length * 2, this.settings.customCrosshairColor, true);
+        } else {
+            if (outline > 0) this.circle(cx, cy, length, thickness + (outline * 2), this.settings.customCrosshairOutlineColor);
+            this.circle(cx, cy, length, thickness, this.settings.customCrosshairColor);
         }
-
-        this.rect(cx - length, cy - (thickness / 2), 0, 0, (length * 2) , thickness, this.settings.customCrosshairColor, true);
-        this.rect(cx - (thickness * 0.50), cy - length, 0, 0, thickness, length * 2, this.settings.customCrosshairColor, true);
     }
 
     getCrosshair(t) {
