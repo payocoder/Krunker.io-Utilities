@@ -12,7 +12,7 @@
 
 
 ### Requirements:
-- Tampermonkey
+- Install [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en)
 - ES6 Support
 ### Userscript: [CLICK HERE](https://raw.githubusercontent.com/Tehchy/Krunker.io-Utilities/master/userscript.user.js)
 

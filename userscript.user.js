@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.7
+// @version      0.8
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -47,6 +47,7 @@ class Utilities {
             customCrosshairOutlineColor: "#000000",
             antiGuest: false,
             chat: true,
+            hideFullLobbies: false,
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -207,6 +208,16 @@ class Utilities {
                 set(t) {
                     self.settings.chat = t;
                     window.chatUI.style.display = t ? "block" : "none"
+                }
+            },
+            hideFullLobbies: {
+                name: "Hide Full Lobbies",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("hideFullLobbies", this.checked)' ${self.settingsMenu.hideFullLobbies.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.hideFullLobbies = t;
                 }
             },
         };
@@ -414,6 +425,7 @@ GM_xmlhttpRequest({
             .replace(/window\.addEventListener\("keypress",function\((\w+)\){/, 'window.addEventListener("keypress",function($1){window.utilities.keyPress($1),')
             .replace(/hitHolder\.innerHTML=(\w+)}\((\w+)\),(\w+).update\((\w+)\)(.*)"block"==nukeFlash\.style\.display/, 'hitHolder.innerHTML=$1}($2),$3.update($4),"block" === nukeFlash.style.display')
             .replace(/(\w+)\("Kicked for inactivity"\)\),(.*),requestAnimFrame\((\w+)\)/, '$1("Kicked for inactivity")),requestAnimFrame($3)')
+            .replace(/setTimeout\(\(\)=>{!(.*)},2500\);/, '')
             .replace(/(\w+).updateCrosshair=function\((\w+),(\w+)\){/, '$1.updateCrosshair=function($2,$3){$2=window.utilities.getCrosshair($2);')
             .replace(/antialias:!1/g, 'antialias:window.utilities.settings.antiAlias ? 1 : !1')
             .replace(/precision:"mediump"/g, 'precision:window.utilities.settings.highPrecision ? "highp": "mediump"')
@@ -422,7 +434,7 @@ GM_xmlhttpRequest({
             .replace(/if\(!this\.socket\){/, 'if(!this.socket){window.utilities.hooks.socket = this;')
             .replace(/(if\((\w+)\?(\w+).data)/, 'window.utilities.isCustom = $2;$1')
             .replace(/(hostGameMsg.innerHTML="Please wait\.\.\.")/, '$1,window.utilities.isHost=true;')
-            .replace(/setTimeout\(\(\)=>{!(.*)},2500\);/, '');
+            .replace(/((\w+).obj\.active)/, '(window.utilities.settings.hideFullLobbies && $2.obj.playerCount < $2.obj.maxPlayers) && $1')
         GM_xmlhttpRequest({
             method: "GET",
             url: document.location.origin,
