@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.8
+// @version      0.8_1
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -434,7 +434,7 @@ GM_xmlhttpRequest({
             .replace(/if\(!this\.socket\){/, 'if(!this.socket){window.utilities.hooks.socket = this;')
             .replace(/(if\((\w+)\?(\w+).data)/, 'window.utilities.isCustom = $2;$1')
             .replace(/(hostGameMsg.innerHTML="Please wait\.\.\.")/, '$1,window.utilities.isHost=true;')
-            .replace(/((\w+).obj\.active)/, '(window.utilities.settings.hideFullLobbies && $2.obj.playerCount < $2.obj.maxPlayers) && $1')
+            .replace(/((\w+).obj\.active)/, '((window.utilities.settings.hideFullLobbies && $2.obj.playerCount < $2.obj.maxPlayers) || !window.utilities.settings.hideFullLobbies) && $1')
         GM_xmlhttpRequest({
             method: "GET",
             url: document.location.origin,
