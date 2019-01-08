@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.8_1
+// @version      0.9
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -46,7 +46,9 @@ class Utilities {
             customCrosshairOutline: 0,
             customCrosshairOutlineColor: "#000000",
             antiGuest: false,
-            chat: true,
+            showKills: true,
+            showMessages: true,
+            showOpenings: true,
             hideFullLobbies: false,
         };
         this.settingsMenu = [];
@@ -198,26 +200,46 @@ class Utilities {
                     self.settings.antiGuest = t;
                 }
             },
-            chat: {
-                name: "Show Chat",
-                pre: "<div class='setHed'>Interface</div>",
-                val: 1,
-                html() {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("chat", this.checked)' ${self.settingsMenu.chat.val ? "checked" : ""}><span class='slider'></span></label>`;
-                },
-                set(t) {
-                    self.settings.chat = t;
-                    window.chatUI.style.display = t ? "block" : "none"
-                }
-            },
             hideFullLobbies: {
                 name: "Hide Full Lobbies",
+                pre: "<div class='setHed'>Interface</div>",
                 val: 0,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("hideFullLobbies", this.checked)' ${self.settingsMenu.hideFullLobbies.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
                 set(t) {
                     self.settings.hideFullLobbies = t;
+                }
+            },
+            showMessages: {
+                name: "Show Messages",
+                pre: "<div class='setHed'>Chat</div>",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showMessages", this.checked)' ${self.settingsMenu.showMessages.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.showMessages = t;
+                }
+            },
+            showKills: {
+                name: "Show Kills",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showKills", this.checked)' ${self.settingsMenu.showKills.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.showKills = t;
+                }
+            },
+            showOpenings: {
+                name: "Show Openings",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showOpenings", this.checked)' ${self.settingsMenu.showOpenings.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.showOpenings = t;
                 }
             },
         };
@@ -435,6 +457,11 @@ GM_xmlhttpRequest({
             .replace(/(if\((\w+)\?(\w+).data)/, 'window.utilities.isCustom = $2;$1')
             .replace(/(hostGameMsg.innerHTML="Please wait\.\.\.")/, '$1,window.utilities.isHost=true;')
             .replace(/((\w+).obj\.active)/, '((window.utilities.settings.hideFullLobbies && $2.obj.playerCount < $2.obj.maxPlayers) || !window.utilities.settings.hideFullLobbies) && $1')
+            //.replace(/(\w+)(&&\w+\(null,\((\w+)==(\w+))/, '$1 && window.utilities.settings.showMessages $2')
+            .replace(/(\w+\.store\.skins\[\w+\];\w+&&)(\w+\()/, '$1 window.utilities.settings.showOpenings && $2')
+            .replace(/(findBySid\(\w+\)\)&&)(\w+\()/, '$1 window.utilities.settings.showKills && $2')
+            .replace(/(\w+\.deathDelay\)}if\(!\w+)\){/, '$1 && window.utilities.settings.showKills){')
+            .replace(/(\(\w+\,\w+\,(\w+)\){)(for\(chatList\.innerHTML)/, '$1 if(!$2 && !window.utilities.settings.showMessages)return; $3')
         GM_xmlhttpRequest({
             method: "GET",
             url: document.location.origin,
