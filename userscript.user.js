@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.9
+// @version      0.9.1
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -426,6 +426,7 @@ class Utilities {
     }
 
     onLoad() {
+        document.getElementsByClassName('socialButton')[0].insertAdjacentHTML('beforebegin', '<img class=\'socialButton\' onclick="openURL(\'https://discord.gg/3vVuv5X\')" src="https://i.imgur.com/vGFChcR.png" /><br/>');
         this.createCanvas();
         this.createMenu();
     }
