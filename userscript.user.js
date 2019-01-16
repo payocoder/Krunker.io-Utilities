@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.9.1
+// @version      0.9.2
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -24,6 +24,8 @@ class Utilities {
         this.isHost = false;
         this.hooks = {
             socket: null,
+            three: null,
+            editor: null,
         };
         this.fps = {
             cur: 0,
@@ -50,6 +52,7 @@ class Utilities {
             showMessages: true,
             showOpenings: true,
             hideFullLobbies: false,
+            showLeaderboard: true,
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -98,7 +101,7 @@ class Utilities {
                     </select>`
                 },
                 set(t) {
-                    self.settings.fpsFontSize = parseInt(t)
+                    self.settings.fpsFontSize = parseInt(t);
                 }
             },
             crosshairSize: {
@@ -108,7 +111,18 @@ class Utilities {
                     return `<span class='sliderVal' id='slid_utilities_crosshairSize'>${self.settingsMenu.crosshairSize.val}</span><div class='slidecontainer'><input type='range' min='0' max='100' step='2' value='${self.settingsMenu.crosshairSize.val}' class='sliderM' oninput="window.utilities.setSetting('crosshairSize', this.value)"></div>`
                 },
                 set(t) {
-                    self.settings.crosshairSize = t
+                    self.settings.crosshairSize = t;
+                }
+            },
+            showLeaderboard: {
+                name: "Show Leaderboard",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showLeaderboard", this.checked)' ${self.settingsMenu.showLeaderboard.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.showLeaderboard = t;
+                    document.getElementById('leaderDisplay').style.display = t ? "block" : "none";
                 }
             },
             customCrosshair: {
@@ -463,6 +477,8 @@ GM_xmlhttpRequest({
             .replace(/(findBySid\(\w+\)\)&&)(\w+\()/, '$1 window.utilities.settings.showKills && $2')
             .replace(/(\w+\.deathDelay\)}if\(!\w+)\){/, '$1 && window.utilities.settings.showKills){')
             .replace(/(\(\w+\,\w+\,(\w+)\){)(for\(chatList\.innerHTML)/, '$1 if(!$2 && !window.utilities.settings.showMessages)return; $3')
+            .replace(/{this\.scene=new (\w+).Scene,/, '{this.scene=new $1.Scene,window.utilities.hooks.three = $1,')
+            .replace(/this\.scene&&\(this\.postprocessing\.enabled/, 'window.utilities.hooks.editor = this;this.scene&&(this.postprocessing.enabled')
         GM_xmlhttpRequest({
             method: "GET",
             url: document.location.origin,
