@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.9.2
+// @version      0.9.3
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -471,7 +471,7 @@ GM_xmlhttpRequest({
             .replace(/if\(!this\.socket\){/, 'if(!this.socket){window.utilities.hooks.socket = this;')
             .replace(/(if\((\w+)\?(\w+).data)/, 'window.utilities.isCustom = $2;$1')
             .replace(/(hostGameMsg.innerHTML="Please wait\.\.\.")/, '$1,window.utilities.isHost=true;')
-            .replace(/((\w+).obj\.active)/, '((window.utilities.settings.hideFullLobbies && $2.obj.playerCount < $2.obj.maxPlayers) || !window.utilities.settings.hideFullLobbies) && $1')
+            .replace(/if\(((\w+).obj\.active)/, 'if(((window.utilities.settings.hideFullLobbies && $2.obj.playerCount < $2.obj.maxPlayers) || !window.utilities.settings.hideFullLobbies) && $1')
             //.replace(/(\w+)(&&\w+\(null,\((\w+)==(\w+))/, '$1 && window.utilities.settings.showMessages $2')
             .replace(/(\w+\.store\.skins\[\w+\];\w+&&)(\w+\()/, '$1 window.utilities.settings.showOpenings && $2')
             .replace(/(findBySid\(\w+\)\)&&)(\w+\()/, '$1 window.utilities.settings.showKills && $2')
