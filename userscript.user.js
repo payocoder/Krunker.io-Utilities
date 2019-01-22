@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/userscript.user.js
-// @version      0.9.4
+// @version      0.9.5
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party)=.+)$/
 // @grant        GM_xmlhttpRequest
@@ -484,7 +484,8 @@ GM_xmlhttpRequest({
             url: document.location.origin,
             onload: res => {
                 let html = res.responseText;
-                html = html.replace(/ src="js\/game\.js">/, `>${Utilities.toString()}\nwindow.utilities = new Utilities();\n${code.toString()}`);
+                html = html.replace(/ src="js\/game\.js">/, `>${Utilities.toString()}\nwindow.utilities = new Utilities();\n${code.toString()}`)
+                    .replace(/ src="libs\/zip-ext\.js">/, '>')
                 document.open();
                 document.write(html);
                 document.close();
