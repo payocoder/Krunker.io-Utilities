@@ -14,6 +14,6 @@
 ### Requirements:
 - Install [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en)
 - ES6 Support
-### Userscript: [CLICK HERE](https://raw.githubusercontent.com/Tehchy/Krunker.io-Utilities/master/userscript.user.js)
+### Userscript: NEW: [CLICK HERE](https://raw.githubusercontent.com/Tehchy/Krunker.io-Utilities/master/lite.user.js) OLD - [CLICK HERE](https://raw.githubusercontent.com/Tehchy/Krunker.io-Utilities/master/userscript.user.js)
 
 If you think a feature is a "hack" let me know and ill remove it
