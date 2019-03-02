@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.1
+// @version      0.0.2
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -29,6 +29,8 @@ class Utilities {
             customCrosshairOutline: 0,
             customCrosshairOutlineColor: "#000000",
             showLeaderboard: true,
+            customScope: 'https://krunker.io/textures/recticle.png',
+            customScopeHideBoxes: false
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -112,7 +114,8 @@ class Utilities {
                 html() {
                     return `<select class="floatR" onchange="window.utilities.setSetting('customCrosshairShape', this.value)">
                     <option value="0"${self.settingsMenu.customCrosshairShape.val == 0 ? " selected" : ""}>Cross</option>
-                    <option value="1"${self.settingsMenu.customCrosshairShape.val == 1 ? " selected" : ""}>Circle</option>
+                    <option value="1"${self.settingsMenu.customCrosshairShape.val == 1 ? " selected" : ""}>Hollow Circle</option>
+                    <option value="2"${self.settingsMenu.customCrosshairShape.val == 2 ? " selected" : ""}>Filled Circle</option>
                     </select>`
                 },
                 set(t) {
@@ -133,7 +136,7 @@ class Utilities {
                 name: "Length",
                 val: 16,
                 html() {
-                    return `<span class='sliderVal' id='slid_utilities_customCrosshairLength'>${self.settingsMenu.customCrosshairLength.val}</span><div class='slidecontainer'><input type='range' min='4' max='50' step='2' value='${self.settingsMenu.customCrosshairLength.val}' class='sliderM' oninput="window.utilities.setSetting('customCrosshairLength', this.value)"></div>`
+                    return `<span class='sliderVal' id='slid_utilities_customCrosshairLength'>${self.settingsMenu.customCrosshairLength.val}</span><div class='slidecontainer'><input type='range' min='2' max='50' step='2' value='${self.settingsMenu.customCrosshairLength.val}' class='sliderM' oninput="window.utilities.setSetting('customCrosshairLength', this.value)"></div>`
                 },
                 set(t) {
                     self.settings.customCrosshairLength = parseInt(t);
@@ -167,6 +170,29 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customCrosshairOutlineColor = t;
+                }
+            },
+            customScope: {
+                name: "Image",
+                pre: "<br><div class='setHed'>Custom Scope</div><hr>",
+                val: '',
+                html() {
+                    return `<input type='url' id='customScope' name='url' value='${self.settingsMenu.customScope.val}' oninput='window.utilities.setSetting("customScope", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customScope = t;
+                    document.getElementById('recticleImg').src = t.length > 1 ? t : 'https://krunker.io/textures/recticle.png';
+                }
+            },
+            customScopeHideBoxes: {
+                name: "Hide Black Boxes",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customScopeHideBoxes", this.checked)' ${self.settingsMenu.customScopeHideBoxes.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.customScopeHideBoxes = t;
+                    Array.prototype.slice.call(document.querySelectorAll('.black')).forEach(el => el.style.display = t ? "none" : "block");
                 }
             },
         };
@@ -232,13 +258,13 @@ class Utilities {
         this.ctx.restore();
     }
 
-    circle(x, y, r, w, color) {
+    circle(x, y, r, w, color, fill = false) {
         this.ctx.save();
         this.ctx.beginPath();
         this.ctx.lineWidth = w;
-        this.ctx.strokeStyle = color;
+        fill ? this.ctx.fillStyle = color : this.ctx.strokeStyle = color;
         this.ctx.arc(x, y, r, 0, 2 * Math.PI);
-        this.ctx.stroke();
+        fill ? this.ctx.fill() : this.ctx.stroke();
         this.ctx.closePath();
         this.ctx.restore();
     }
@@ -273,8 +299,8 @@ class Utilities {
             this.rect(cx - length, cy - (thickness / 2), 0, 0, (length * 2) , thickness, this.settings.customCrosshairColor, true);
             this.rect(cx - (thickness * 0.50), cy - length, 0, 0, thickness, length * 2, this.settings.customCrosshairColor, true);
         } else {
-            if (outline > 0) this.circle(cx, cy, length, thickness + (outline * 2), this.settings.customCrosshairOutlineColor);
-            this.circle(cx, cy, length, thickness, this.settings.customCrosshairColor);
+            if (outline > 0 && this.settings.customCrosshairShape != 2) this.circle(cx, cy, length, thickness + (outline * 2), this.settings.customCrosshairOutlineColor);
+            this.circle(cx, cy, length, thickness, this.settings.customCrosshairColor, this.settings.customCrosshairShape == 2);
         }
     }
 
