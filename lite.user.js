@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.3
+// @version      0.0.4
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -30,7 +30,8 @@ class Utilities {
             customCrosshairOutlineColor: "#000000",
             showLeaderboard: true,
             customScope: 'https://krunker.io/textures/recticle.png',
-            customScopeHideBoxes: false
+            customScopeHideBoxes: false,
+            customHitMarker: 'https://krunker.io/textures/hitmarker.png',
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -95,7 +96,7 @@ class Utilities {
             },
             customCrosshair: {
                 name: "Style",
-                pre: "<br><div class='setHed'>Custom Crosshair</div><hr>",
+                pre: "<br><div class='setHed'>Crosshair</div><hr>",
                 val: 0,
                 html() {
                     return `<select class="floatR" onchange="window.utilities.setSetting('customCrosshair', this.value)">
@@ -173,8 +174,8 @@ class Utilities {
                 }
             },
             customScope: {
-                name: "Image",
-                pre: "<br><div class='setHed'>Custom Scope</div><hr>",
+                name: "Scope",
+                pre: "<br><div class='setHed'>Customization</div><hr>",
                 val: '',
                 html() {
                     return `<input type='url' id='customScope' name='url' value='${self.settingsMenu.customScope.val}' oninput='window.utilities.setSetting("customScope", this.value)' style='float:right;margin-top:5px'/>`
@@ -193,6 +194,17 @@ class Utilities {
                 set(t) {
                     self.settings.customScopeHideBoxes = t;
                     Array.prototype.slice.call(document.querySelectorAll('.black')).forEach(el => el.style.display = t ? "none" : "block");
+                }
+            },
+            customHitMarker: {
+                name: "Hitmarker",
+                val: '',
+                html() {
+                    return `<input type='url' id='customHitMarker' name='url' value='${self.settingsMenu.customHitMarker.val}' oninput='window.utilities.setSetting("customHitMarker", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customHitMarker = t;
+                    document.getElementById('hitmarker').src = t.length > 1 ? t : 'https://krunker.io/textures/hitmarker.png';
                 }
             },
         };
