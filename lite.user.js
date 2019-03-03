@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.5
+// @version      0.0.6
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -114,10 +114,6 @@ class Utilities {
                 set(t) {
                     self.settings.streamerMode = t;
                     document.getElementById('chatUI').style.display = t ? "none" : "block";
-                    if (!t) {
-                        window.history.pushState('Object', 'Title', this.lastURL || document.location.href);
-                        this.lastURL = null;
-                    }
                 }
             },
             customCrosshair: {
@@ -307,7 +303,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customTimer = t;
-                    document.getElementById('timerDisplay').src = t.length > 1 ? t : 'https://krunker.io/img/timer.png';
+                    document.getElementById('timerIcon').src = t.length > 1 ? t : 'https://krunker.io/img/timer.png';
                 }
             },
         };
@@ -424,7 +420,13 @@ class Utilities {
     }
     
     streamerMode() {
-        if (!this.settings.streamerMode) return;
+        if (!this.settings.streamerMode) {
+            if (document.location.href.includes('/streamer')) {
+                window.history.pushState('Object', 'Title', this.lastURL);
+                this.lastURL = null;
+            }   
+            return;
+        }
         if (!document.location.href.includes('/streamer')) {
             this.lastURL = document.location.href;
             window.history.pushState('Object', 'Title', '/streamer');
