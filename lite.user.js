@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.4
+// @version      0.0.5
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -18,20 +18,31 @@ class Utilities {
         };
         this.canvas = null;
         this.ctx = null;
+        this.lastURL = null;
+        this.scramble = (text) => (text.replace(/.(.)?/g, '$1') + ("d"+text).replace(/.(.)?/g, '$1'));
         this.settings = {
             fpsCounter: false,
             fpsFontSize: 10,
             customCrosshair: 0,
             customCrosshairShape: 0,
-            customCrosshairColor: "#FFFFFF",
+            customCrosshairColor: '#FFFFFF',
             customCrosshairLength: 14,
             customCrosshairThickness: 2,
             customCrosshairOutline: 0,
-            customCrosshairOutlineColor: "#000000",
+            customCrosshairOutlineColor: '#000000',
             showLeaderboard: true,
             customScope: 'https://krunker.io/textures/recticle.png',
             customScopeHideBoxes: false,
             customHitMarker: 'https://krunker.io/textures/hitmarker.png',
+            customFlashOverlay: 'https://krunker.io/img/flash.png',
+            customBlood: 'https://krunker.io/img/blood.png',
+            customAmmo: 'https://krunker.io/textures/ammo_0.png',
+            customNameSub: 'https://krunker.io/img/skull.png',
+            customKills: 'https://krunker.io/img/skull.png',
+            customTimer: 'https://krunker.io/img/timer.png',
+            customGameName: 'Krunker',
+            streamerMode: false,
+            
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -92,6 +103,21 @@ class Utilities {
                 set(t) {
                     self.settings.showLeaderboard = t;
                     document.getElementById('leaderDisplay').style.display = t ? "block" : "none";
+                }
+            },
+            streamerMode: {
+                name: "Streamer Mode (WIP)",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("streamerMode", this.checked)' ${self.settingsMenu.streamerMode.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.streamerMode = t;
+                    document.getElementById('chatUI').style.display = t ? "none" : "block";
+                    if (!t) {
+                        window.history.pushState('Object', 'Title', this.lastURL || document.location.href);
+                        this.lastURL = null;
+                    }
                 }
             },
             customCrosshair: {
@@ -173,9 +199,31 @@ class Utilities {
                     self.settings.customCrosshairOutlineColor = t;
                 }
             },
-            customScope: {
-                name: "Scope",
+            customGameName: {
+                name: "Game Name",
                 pre: "<br><div class='setHed'>Customization</div><hr>",
+                val: '',
+                html() {
+                    return `<input type='text' id='customGameName' name='text' value='${self.settingsMenu.customGameName.val}' oninput='window.utilities.setSetting("customGameName", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customGameName = t;
+                    document.getElementById('gameName').innerHTML = t.length > 1 ? t : 'Krunker';
+                }
+            },
+            customNameSub: {
+                name: "NameSub Image",
+                val: '',
+                html() {
+                    return `<input type='url' id='customNameSub' name='url' value='${self.settingsMenu.customNameSub.val}' oninput='window.utilities.setSetting("customNameSub", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customNameSub = t;
+                    document.getElementById('nameSub').innerHTML = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
+                }
+            },
+            customScope: {
+                name: "Scope Image",
                 val: '',
                 html() {
                     return `<input type='url' id='customScope' name='url' value='${self.settingsMenu.customScope.val}' oninput='window.utilities.setSetting("customScope", this.value)' style='float:right;margin-top:5px'/>`
@@ -197,7 +245,7 @@ class Utilities {
                 }
             },
             customHitMarker: {
-                name: "Hitmarker",
+                name: "Hitmarker Image",
                 val: '',
                 html() {
                     return `<input type='url' id='customHitMarker' name='url' value='${self.settingsMenu.customHitMarker.val}' oninput='window.utilities.setSetting("customHitMarker", this.value)' style='float:right;margin-top:5px'/>`
@@ -205,6 +253,61 @@ class Utilities {
                 set(t) {
                     self.settings.customHitMarker = t;
                     document.getElementById('hitmarker').src = t.length > 1 ? t : 'https://krunker.io/textures/hitmarker.png';
+                }
+            },
+            customAmmo: {
+                name: "Ammo Icon",
+                val: '',
+                html() {
+                    return `<input type='url' id='customAmmo' name='url' value='${self.settingsMenu.customAmmo.val}' oninput='window.utilities.setSetting("customAmmo", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customAmmo = t;
+                    document.getElementById('ammoIcon').src = t.length > 1 ? t : 'https://krunker.io/textures/ammo_0.png';
+                }
+            },
+            customFlashOverlay: {
+                name: "Flash Overlay",
+                val: '',
+                html() {
+                    return `<input type='url' id='customFlashOverlay' name='url' value='${self.settingsMenu.customFlashOverlay.val}' oninput='window.utilities.setSetting("customFlashOverlay", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customFlashOverlay = t;
+                    document.getElementById('flashOverlay').src = t.length > 1 ? t : 'https://krunker.io/img/flash.png';
+                }
+            },
+            customKills: {
+                name: "Kill Icon",
+                val: '',
+                html() {
+                    return `<input type='url' id='customKills' name='url' value='${self.settingsMenu.customKills.val}' oninput='window.utilities.setSetting("customKills", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customKills = t;
+                    document.getElementById('killsIcon').src = t.length > 1 ? t : 'https://krunker.io/img/skull.png';
+                }
+            },
+            customBlood: {
+                name: "Blood Image",
+                val: '',
+                html() {
+                    return `<input type='url' id='customBlood' name='url' value='${self.settingsMenu.customBlood.val}' oninput='window.utilities.setSetting("customBlood", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customBlood = t;
+                    document.getElementById('bloodDisplay').src = t.length > 1 ? t : 'https://krunker.io/img/blood.png';
+                }
+            },
+            customTimer: {
+                name: "Timer Icon",
+                val: '',
+                html() {
+                    return `<input type='url' id='customTimer' name='url' value='${self.settingsMenu.customTimer.val}' oninput='window.utilities.setSetting("customTimer", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customTimer = t;
+                    document.getElementById('timerDisplay').src = t.length > 1 ? t : 'https://krunker.io/img/timer.png';
                 }
             },
         };
@@ -319,11 +422,21 @@ class Utilities {
     crosshairOpacity(t) {
         return this.settings.customCrosshair == 1 ? 0 : t;
     }
+    
+    streamerMode() {
+        if (!this.settings.streamerMode) return;
+        if (!document.location.href.includes('/streamer')) {
+            this.lastURL = document.location.href;
+            window.history.pushState('Object', 'Title', '/streamer');
+        }
+        Array.prototype.slice.call(document.querySelectorAll("div[class='pInfoH'], div[class='leaderName'], div[class='leaderNameF'], div[id='kCName']")).forEach(el => el.innerHTML = this.scramble(el.innerText));
+    }
 
     render() {
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
         this.drawCrosshair();
         this.drawFPS();
+        this.streamerMode();
         requestAnimationFrame(this.render.bind(this));
     }
 
