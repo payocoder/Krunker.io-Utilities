@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.7
+// @version      0.0.8
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -41,7 +41,8 @@ class Utilities {
             customKills: 'https://krunker.io/img/skull.png',
             customTimer: 'https://krunker.io/img/timer.png',
             customGameName: 'Krunker',
-            streamerMode: false,
+            streamerModeHideLink: false,
+            streamerModeScrambleNames: false,
             
         };
         this.settingsMenu = [];
@@ -105,14 +106,25 @@ class Utilities {
                     document.getElementById('leaderDisplay').style.display = t ? "block" : "none";
                 }
             },
-            streamerMode: {
-                name: "<span onclick='window.utilities.copyLink()' title='Click to copy real link'>Streamer Mode (WIP)</span>",
+            streamerModeHideLink: {
+                name: "<span onclick='window.utilities.copyLink()' title='Click to copy real link'>Hide Link</span>",
+                pre: "<br><div class='setHed'>Streamer Mode</div><hr>",
                 val: 0,
                 html() {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("streamerMode", this.checked)' ${self.settingsMenu.streamerMode.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("streamerModeHideLink", this.checked)' ${self.settingsMenu.streamerModeHideLink.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
                 set(t) {
-                    self.settings.streamerMode = t;
+                    self.settings.streamerModeHideLink = t;
+                }
+            },
+            streamerModeScrambleNames: {
+                name: "Scramble Names",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("streamerModeScrambleNames", this.checked)' ${self.settingsMenu.streamerModeScrambleNames.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.streamerModeScrambleNames = t;
                     document.getElementById('chatUI').style.display = t ? "none" : "block";
                 }
             },
@@ -420,18 +432,18 @@ class Utilities {
     }
     
     streamerMode() {
-        if (!this.settings.streamerMode) {
+        if (!this.settings.streamerModeHideLink) {
             if (document.location.href.includes('/streamer')) {
                 window.history.pushState('Object', 'Title', this.lastURL);
                 this.lastURL = null;
             }   
-            return;
+        } else {
+            if (!document.location.href.includes('/streamer')) {
+                this.lastURL = document.location.href;
+                window.history.pushState('Object', 'Title', '/streamer');
+            }
         }
-        if (!document.location.href.includes('/streamer')) {
-            this.lastURL = document.location.href;
-            window.history.pushState('Object', 'Title', '/streamer');
-        }
-        Array.prototype.slice.call(document.querySelectorAll("div[class='pInfoH'], div[class='leaderName'], div[class='leaderNameF'], div[id='kCName']")).forEach(el => el.innerHTML = this.scramble(el.innerText));
+        if (this.settings.streamerModeScrambleNames) Array.prototype.slice.call(document.querySelectorAll("div[class='pInfoH'], div[class='leaderName'], div[class='leaderNameF'], div[id='kCName']")).forEach(el => el.innerHTML = this.scramble(el.innerText));
     }
 
     copyLink() {
