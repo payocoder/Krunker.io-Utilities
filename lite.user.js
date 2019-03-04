@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.8
+// @version      0.0.9
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -20,6 +20,7 @@ class Utilities {
         this.ctx = null;
         this.lastURL = null;
         this.scramble = (text) => (text.replace(/.(.)?/g, '$1') + ("d"+text).replace(/.(.)?/g, '$1'));
+        this.defaultSettings = null;
         this.settings = {
             fpsCounter: false,
             fpsFontSize: 10,
@@ -41,6 +42,9 @@ class Utilities {
             customKills: 'https://krunker.io/img/skull.png',
             customTimer: 'https://krunker.io/img/timer.png',
             customGameName: 'Krunker',
+            customGameNameColor: '#ffffff',
+            customMenuColors: '#F8C55C',
+            customMenuShadow: '#AE853B',
             streamerModeHideLink: false,
             streamerModeScrambleNames: false,
             
@@ -212,11 +216,38 @@ class Utilities {
                 pre: "<br><div class='setHed'>Customization</div><hr>",
                 val: '',
                 html() {
-                    return `<input type='text' id='customGameName' name='text' value='${self.settingsMenu.customGameName.val}' oninput='window.utilities.setSetting("customGameName", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='text' id='customGameName' name='text' value='${self.settingsMenu.customGameName.val}' oninput='window.utilities.setSetting("customGameName", this.value)' style='float:right;margin-top:5px'/><input type='color' id='customGameNameColor' name='color' value='${self.settingsMenu.customGameNameColor.val}' oninput='window.utilities.setSetting("customGameNameColor", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set(t) {
                     self.settings.customGameName = t;
                     document.getElementById('gameName').innerHTML = t.length > 1 ? t : 'Krunker';
+                }
+            },
+            customGameNameColor: {
+                val: '#ffffff',
+                noShow: true,
+                set(t) {
+                    self.settings.customGameNameColor = t;
+                    document.getElementById('gameName').style.color = t.length > 1 ? t : '#ffffff';
+                }
+            },
+            customMenuColors: {
+                name: "Menu Color & Shadow",
+                val: '#F8C55C',
+                html() {
+                    return `<input type='color' id='customMenuColors' name='color' value='${self.settingsMenu.customMenuColors.val}' oninput='window.utilities.setSetting("customMenuColors", this.value)' style='float:right;margin-top:5px'/><input type='color' id='customMenuShadow' name='color' value='${self.settingsMenu.customMenuShadow.val}' oninput='window.utilities.setSetting("customMenuShadow", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customMenuColors = t;
+                    self.changeMenuColors();
+                }
+            },
+            customMenuShadow: {
+                val: '#AE853B',
+                noShow: true,
+                set(t) {
+                    self.settings.customMenuShadow = t;
+                    self.changeMenuColors();
                 }
             },
             customNameSub: {
@@ -297,7 +328,7 @@ class Utilities {
                 }
             },
             customBlood: {
-                name: "Blood Image",
+                name: "Death Overlay",
                 val: '',
                 html() {
                     return `<input type='url' id='customBlood' name='url' value='${self.settingsMenu.customBlood.val}' oninput='window.utilities.setSetting("customBlood", this.value)' style='float:right;margin-top:5px'/>`
@@ -325,6 +356,7 @@ class Utilities {
             gen: function () {
                 var t = "";
                 for (var key in window.utilities.settingsMenu) {
+                    if (window.utilities.settingsMenu[key].noShow) continue;
                     window.utilities.settingsMenu[key].pre && (t += window.utilities.settingsMenu[key].pre),
                     t += "<div class=\'settName\'>" + window.utilities.settingsMenu[key].name + " " + window.utilities.settingsMenu[key].html() + "</div>";
                 }
@@ -335,6 +367,7 @@ class Utilities {
     }
 
     setupSettings() {
+        this.defaultSettings = JSON.parse(JSON.stringify(this.settings));
         for (const key in this.settingsMenu) {
             if (this.settingsMenu[key].set) {
                 const nt = this.getSavedVal(`kro_set_utilities_${key}`);
@@ -343,6 +376,12 @@ class Utilities {
                 this.settingsMenu[key].set(this.settingsMenu[key].val, !0)
             }
         }
+    }
+    
+    changeMenuColors() {
+        let color = this.settings.customMenuColors.length > 3 ? this.settings.customMenuColors : '#F8C55C';
+        let textShadow = this.settings.customMenuShadow.length > 3 ? this.settings.customMenuShadow : '#AE853B';
+        Array.prototype.slice.call(document.getElementsByClassName('menuLink gButton')).forEach(el => el.setAttribute('style', 'text-transform: uppercase;font-size: 30px;color: ' + color + ' !important;text-shadow: 0 1px 0 ' + textShadow + ', 0 2px 0 ' + textShadow + ', 0 3px 0 #2196F3, 0 4px 0 ' + textShadow + ', 0 5px 0 ' + textShadow + ', 0 6px 0 ' + textShadow + ' !important;'));
     }
 
     keyDown(event) {
