@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.6
+// @version      0.0.7
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -106,7 +106,7 @@ class Utilities {
                 }
             },
             streamerMode: {
-                name: "Streamer Mode (WIP)",
+                name: "<span onclick='window.utilities.copyLink()' title='Click to copy real link'>Streamer Mode (WIP)</span>",
                 val: 0,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("streamerMode", this.checked)' ${self.settingsMenu.streamerMode.val ? "checked" : ""}><span class='slider'></span></label>`;
@@ -432,6 +432,18 @@ class Utilities {
             window.history.pushState('Object', 'Title', '/streamer');
         }
         Array.prototype.slice.call(document.querySelectorAll("div[class='pInfoH'], div[class='leaderName'], div[class='leaderNameF'], div[id='kCName']")).forEach(el => el.innerHTML = this.scramble(el.innerText));
+    }
+
+    copyLink() {
+        const el = document.createElement('textarea');
+        el.value = this.lastURL;
+        el.setAttribute('readonly', '');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
     }
 
     render() {
