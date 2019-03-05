@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.0.9
+// @version      0.1.0
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -43,8 +43,11 @@ class Utilities {
             customTimer: 'https://krunker.io/img/timer.png',
             customGameName: 'Krunker',
             customGameNameColor: '#ffffff',
+            customGameNameShadow: '#a6a6a6',
             customMenuColors: '#F8C55C',
             customMenuShadow: '#AE853B',
+            customMenuHoverColors: '#FFFFFF',
+            customMenuHoverShadow: '#a6a6a6', 
             streamerModeHideLink: false,
             streamerModeScrambleNames: false,
             
@@ -216,7 +219,9 @@ class Utilities {
                 pre: "<br><div class='setHed'>Customization</div><hr>",
                 val: '',
                 html() {
-                    return `<input type='text' id='customGameName' name='text' value='${self.settingsMenu.customGameName.val}' oninput='window.utilities.setSetting("customGameName", this.value)' style='float:right;margin-top:5px'/><input type='color' id='customGameNameColor' name='color' value='${self.settingsMenu.customGameNameColor.val}' oninput='window.utilities.setSetting("customGameNameColor", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='text' id='customGameName' name='text' value='${self.settingsMenu.customGameName.val}' oninput='window.utilities.setSetting("customGameName", this.value)' style='float:right;margin-top:5px'/>
+                    <input type='color' id='customGameNameShadow' name='color' value='${self.settingsMenu.customGameNameShadow.val}' oninput='window.utilities.setSetting("customGameNameShadow", this.value)' style='float:right;margin-top:5px'/>
+                    <input type='color' id='customGameNameColor' name='color' value='${self.settingsMenu.customGameNameColor.val}' oninput='window.utilities.setSetting("customGameNameColor", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set(t) {
                     self.settings.customGameName = t;
@@ -228,14 +233,23 @@ class Utilities {
                 noShow: true,
                 set(t) {
                     self.settings.customGameNameColor = t;
-                    document.getElementById('gameName').style.color = t.length > 1 ? t : '#ffffff';
+                    self.changeGameNameColors();
+                }
+            },
+            customGameNameShadow: {
+                val: '#a6a6a6',
+                noShow: true,
+                set(t) {
+                    self.settings.customGameNameShadow = t;
+                    self.changeGameNameColors();
                 }
             },
             customMenuColors: {
                 name: "Menu Color & Shadow",
                 val: '#F8C55C',
                 html() {
-                    return `<input type='color' id='customMenuColors' name='color' value='${self.settingsMenu.customMenuColors.val}' oninput='window.utilities.setSetting("customMenuColors", this.value)' style='float:right;margin-top:5px'/><input type='color' id='customMenuShadow' name='color' value='${self.settingsMenu.customMenuShadow.val}' oninput='window.utilities.setSetting("customMenuShadow", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='color' id='customMenuShadow' name='color' value='${self.settingsMenu.customMenuShadow.val}' oninput='window.utilities.setSetting("customMenuShadow", this.value)' style='float:right;margin-top:5px'/>
+                    <input type='color' id='customMenuColors' name='color' value='${self.settingsMenu.customMenuColors.val}' oninput='window.utilities.setSetting("customMenuColors", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set(t) {
                     self.settings.customMenuColors = t;
@@ -247,6 +261,26 @@ class Utilities {
                 noShow: true,
                 set(t) {
                     self.settings.customMenuShadow = t;
+                    self.changeMenuColors();
+                }
+            },
+            customMenuHoverColors: {
+                name: "Menu Hover Color & Shadow",
+                val: '#FFFFFF',
+                html() {
+                    return `<input type='color' id='customMenuHoverShadow' name='color' value='${self.settingsMenu.customMenuHoverShadow.val}' oninput='window.utilities.setSetting("customMenuHoverShadow", this.value)' style='float:right;margin-top:5px'/>
+                    <input type='color' id='customMenuHoverColors' name='color' value='${self.settingsMenu.customMenuHoverColors.val}' oninput='window.utilities.setSetting("customMenuHoverColors", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customMenuHoverColors = t;
+                    self.changeMenuColors();
+                }
+            },
+            customMenuHoverShadow: {
+                val: '#a6a6a6',
+                noShow: true,
+                set(t) {
+                    self.settings.customMenuHoverShadow = t;
                     self.changeMenuColors();
                 }
             },
@@ -379,9 +413,69 @@ class Utilities {
     }
     
     changeMenuColors() {
+        Array.prototype.slice.call(document.querySelectorAll("style[id='menuColors']")).forEach(el => el.remove());
+
         let color = this.settings.customMenuColors.length > 3 ? this.settings.customMenuColors : '#F8C55C';
         let textShadow = this.settings.customMenuShadow.length > 3 ? this.settings.customMenuShadow : '#AE853B';
-        Array.prototype.slice.call(document.getElementsByClassName('menuLink gButton')).forEach(el => el.setAttribute('style', 'text-transform: uppercase;font-size: 30px;color: ' + color + ' !important;text-shadow: 0 1px 0 ' + textShadow + ', 0 2px 0 ' + textShadow + ', 0 3px 0 #2196F3, 0 4px 0 ' + textShadow + ', 0 5px 0 ' + textShadow + ', 0 6px 0 ' + textShadow + ' !important;'));
+        let hcolor = this.settings.customMenuHoverColors.length > 3 ? this.settings.customMenuHoverColors : '#FFFFFF';
+        let htextShadow = this.settings.customMenuHoverShadow.length > 3 ? this.settings.customMenuHoverShadow : '#a6a6a6';
+        
+        this.addStyle('menuColors', `
+            .gButton {
+                text-transform: uppercase;
+                font-size: 30px;
+                color: ${color} !important;
+                text-shadow:
+                    0 1px 0 ${textShadow},
+                    0 2px 0 ${textShadow},
+                    0 3px 0 ${textShadow},
+                    0 4px 0 ${textShadow},
+                    0 5px 0 ${textShadow},
+                    0 6px 0 ${textShadow} !important;
+            }
+            .gButton:hover {
+                text-decoration: none;
+                color: ${hcolor} !important;
+                text-shadow:
+                    0 1px 0 ${htextShadow},
+                    0 2px 0 ${htextShadow},
+                    0 3px 0 ${htextShadow},
+                    0 4px 0 ${htextShadow},
+                    0 5px 0 ${htextShadow},
+                    0 6px 0 ${htextShadow} !important;
+            }
+        `);
+     }
+    
+    changeGameNameColors() {
+        Array.prototype.slice.call(document.querySelectorAll("style[id='nameColors']")).forEach(el => el.remove());
+        let color = this.settings.customGameNameColor.length > 3 ? this.settings.customGameNameColor : '#FFFFFF';
+        let textShadow = this.settings.customGameNameShadow.length > 3 ? this.settings.customGameNameShadow : '#a6a6a6';
+        
+        this.addStyle('nameColors', `
+            #gameName {
+                width: 100%;
+                position: absolute;
+                text-align: center;
+                font-family: 'HeaderFont';
+                margin-top: -12px;
+                font-size: 184px;
+                color: ${color};
+                text-shadow:
+                    0 1px 0 ${textShadow},
+                    0 2px 0 ${textShadow},
+                    0 3px 0 ${textShadow},
+                    0 4px 0 ${textShadow},
+                    0 5px 0 ${textShadow},
+                    0 6px 0 ${textShadow},
+                    0 7px 0 ${textShadow},
+                    0 8px 0 ${textShadow},
+                    0 9px 0 ${textShadow},
+                    0 10px 0 ${textShadow},
+                    0 11px 0 ${textShadow},
+                    0 12px 0 ${textShadow};
+            }
+        `);
     }
 
     keyDown(event) {
@@ -391,6 +485,17 @@ class Utilities {
     chatMessage(t, e, n) {
         const chatList = document.getElementById('chatList');
         for (chatList.innerHTML += n ? `<div class='chatItem'><span class='chatMsg'>${e}</span></div><br/>` : `<div class='chatItem'>${t || "unknown"}: <span class='chatMsg'>${e}</span></div><br/>`; chatList.scrollHeight >= 250;) chatList.removeChild(chatList.childNodes[0])
+    }
+
+    addStyle(id, css) {
+        var head = document.head || document.getElementsByTagName('head')[0];
+        if (head) {
+            var style = document.createElement("style");
+            style.id = id;
+            style.type = "text/css";
+            style.appendChild(document.createTextNode(css));
+            head.appendChild(style);
+        }
     }
 
     pixelTranslate(ctx, x, y) {
