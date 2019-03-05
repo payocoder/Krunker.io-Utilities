@@ -126,7 +126,7 @@ class Utilities {
                 }
             },
             streamerModeHideLink: {
-                name: "<span onclick='window.utilities.copyLink()' title='Click to copy real link'>Hide Link</span>",
+                name: "<a onclick='window.utilities.copyLink()' title='Click to copy real link'>Hide Link</a>",
                 pre: "<br><div class='setHed'>Streamer Mode</div><hr>",
                 val: 0,
                 html() {
