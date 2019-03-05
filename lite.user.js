@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.0
+// @version      0.1.1
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -50,6 +50,7 @@ class Utilities {
             customMenuHoverShadow: '#a6a6a6', 
             streamerModeHideLink: false,
             streamerModeScrambleNames: false,
+            autoFindNew: false,
             
         };
         this.settingsMenu = [];
@@ -111,6 +112,17 @@ class Utilities {
                 set(t) {
                     self.settings.showLeaderboard = t;
                     document.getElementById('leaderDisplay').style.display = t ? "block" : "none";
+                }
+            },
+            autoFindNew: {
+                name: "New Lobby Finder",
+                pre: "<br><div class='setHed'>Features</div><hr>",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("autoFindNew", this.checked)' ${self.settingsMenu.autoFindNew.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.autoFindNew = t;
                 }
             },
             streamerModeHideLink: {
@@ -394,6 +406,7 @@ class Utilities {
                     window.utilities.settingsMenu[key].pre && (t += window.utilities.settingsMenu[key].pre),
                     t += "<div class=\'settName\'>" + window.utilities.settingsMenu[key].name + " " + window.utilities.settingsMenu[key].html() + "</div>";
                 }
+                t += "<a onclick='window.utilities.resetSettings()' class='menuLink'>Reset Settings</a>";
                 return t;
             }
         });
@@ -479,7 +492,12 @@ class Utilities {
     }
 
     keyDown(event) {
-        if (this.activeInput()) return;
+        if (window.utilties.activeInput()) return;
+        if (event.keyCode === 9) {
+            document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+            document.exitPointerLock();
+            window.showWindow(window.windows.length - 1);
+        }
     }
 
     chatMessage(t, e, n) {
@@ -601,17 +619,30 @@ class Utilities {
         document.execCommand('copy');
         document.body.removeChild(el);
     }
+    
+    autoFindNew() {
+        if (!this.settings.autoFindNew) return;
+        if (instructions.style.display !== "none" && instructions.innerText.includes('Try seeking a new game')) window.location.href = "//krunker.io";
+    }
 
     render() {
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
         this.drawCrosshair();
         this.drawFPS();
         this.streamerMode();
+        this.autoFindNew();
         requestAnimationFrame(this.render.bind(this));
     }
 
     activeInput() {
         return document.activeElement.tagName == "INPUT";
+    }
+    
+    resetSettings() {
+        if (confirm("Are you sure you want to reset all your utilties settings? This will also refresh the page")) {
+            Object.keys(localStorage).filter(x=>x.includes("kro_set_utilities_")).forEach(x => localStorage.removeItem(x));
+            location.reload();
+        }
     }
 
     setSetting(t, e) {
@@ -634,6 +665,7 @@ class Utilities {
     onLoad() {
         this.createCanvas();
         this.createMenu();
+        window.addEventListener("keydown", this.keyDown);
     }
 }
 window.addEventListener('load', function() {
