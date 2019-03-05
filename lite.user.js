@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.2
+// @version      0.1.3
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -20,6 +20,7 @@ class Utilities {
         this.ctx = null;
         this.lastURL = null;
         this.scramble = (text) => (text.replace(/.(.)?/g, '$1') + ("d"+text).replace(/.(.)?/g, '$1'));
+        this.findingNew = false;
         this.defaultSettings = null;
         this.settings = {
             fpsCounter: false,
@@ -622,7 +623,13 @@ class Utilities {
     
     autoFindNew() {
         if (!this.settings.autoFindNew) return;
-        if (instructions.style.display !== "none" && instructions.innerText.includes('Try seeking a new game')) window.location.href = "//krunker.io";
+        if (instructions.style.display !== "none" && 
+            instructions.innerText.includes('Try seeking a new game') && 
+            !instructions.innerText.includes('Kicked for inactivity') &&
+            !this.findingNew) {
+                this.findingNew = true;
+                location = document.location.origin;
+        }
     }
 
     render() {
