@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.3
+// @version      0.1.4
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -21,6 +21,7 @@ class Utilities {
         this.lastURL = null;
         this.scramble = (text) => (text.replace(/.(.)?/g, '$1') + ("d"+text).replace(/.(.)?/g, '$1'));
         this.findingNew = false;
+        this.deathMsgSent = false;
         this.defaultSettings = null;
         this.settings = {
             fpsCounter: false,
@@ -52,6 +53,7 @@ class Utilities {
             streamerModeHideLink: false,
             streamerModeScrambleNames: false,
             autoFindNew: false,
+            deathMessage: '',
             
         };
         this.settingsMenu = [];
@@ -124,6 +126,16 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.autoFindNew = t;
+                }
+            },
+            deathMessage: {
+                name: "Death Message",
+                val: '',
+                html() {
+                    return `<input type='text' id='deathMessage' name='text' value='${self.settingsMenu.deathMessage.val}' oninput='window.utilities.setSetting("deathMessage", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.deathMessage = t;
                 }
             },
             streamerModeHideLink: {
@@ -631,6 +643,22 @@ class Utilities {
                 location = document.location.origin;
         }
     }
+    
+    deathMessage() {
+        if (!this.settings.deathMessage.length) return;
+        let death = document.getElementById('bloodDisplay');
+        if (death.style.display == "block" && death.style.opacity == 1) {
+            if (!this.deathMsgSent) {
+                this.deathMsgSent = true;
+                chatInput.value = this.settings.deathMessage;
+                chatInput.focus()
+                window.pressButton(13);
+                chatInput.blur();
+            }
+        } else {
+            this.deathMsgSent = false;
+        }
+    }
 
     render() {
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
@@ -638,6 +666,7 @@ class Utilities {
         this.drawFPS();
         this.streamerMode();
         this.autoFindNew();
+        this.deathMessage()
         requestAnimationFrame(this.render.bind(this));
     }
 
