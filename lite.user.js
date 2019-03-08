@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.4
+// @version      0.1.5
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -317,7 +317,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customNameSub = t;
-                    document.getElementById('nameSub').innerHTML = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
+                    document.getElementById('nameSub').src = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
                 }
             },
             customScope: {
