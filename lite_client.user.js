@@ -692,3 +692,4 @@ class Utilities {
         window.addEventListener("keydown", this.keyDown);
     }
 }
+window.utilities = new Utilities();
