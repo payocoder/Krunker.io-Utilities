@@ -9,6 +9,7 @@ class Utilities {
         this.lastURL = null;
         this.scramble = (text) => (text.replace(/.(.)?/g, '$1') + ("d"+text).replace(/.(.)?/g, '$1'));
         this.findingNew = false;
+        this.deathMsgSent = false;
         this.defaultSettings = null;
         this.settings = {
             fpsCounter: false,
@@ -40,6 +41,7 @@ class Utilities {
             streamerModeHideLink: false,
             streamerModeScrambleNames: false,
             autoFindNew: false,
+            deathMessage: '',
             
         };
         this.settingsMenu = [];
@@ -112,6 +114,16 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.autoFindNew = t;
+                }
+            },
+            deathMessage: {
+                name: "Death Message",
+                val: '',
+                html() {
+                    return `<input type='text' id='deathMessage' name='text' value='${self.settingsMenu.deathMessage.val}' oninput='window.utilities.setSetting("deathMessage", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.deathMessage = t;
                 }
             },
             streamerModeHideLink: {
@@ -293,7 +305,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customNameSub = t;
-                    document.getElementById('nameSub').innerHTML = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
+                    document.getElementById('nameSub').src = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
                 }
             },
             customScope: {
@@ -619,6 +631,22 @@ class Utilities {
                 location = document.location.origin;
         }
     }
+    
+    deathMessage() {
+        if (!this.settings.deathMessage.length) return;
+        let death = document.getElementById('bloodDisplay');
+        if (death.style.display == "block" && death.style.opacity == 1) {
+            if (!this.deathMsgSent) {
+                this.deathMsgSent = true;
+                chatInput.value = this.settings.deathMessage;
+                chatInput.focus()
+                window.pressButton(13);
+                chatInput.blur();
+            }
+        } else {
+            this.deathMsgSent = false;
+        }
+    }
 
     render() {
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
@@ -626,6 +654,7 @@ class Utilities {
         this.drawFPS();
         this.streamerMode();
         this.autoFindNew();
+        this.deathMessage()
         requestAnimationFrame(this.render.bind(this));
     }
 
@@ -663,4 +692,3 @@ class Utilities {
         window.addEventListener("keydown", this.keyDown);
     }
 }
-window.utilities = new Utilities();
