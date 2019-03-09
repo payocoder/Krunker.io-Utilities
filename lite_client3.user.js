@@ -492,15 +492,6 @@ class Utilities {
         `);
     }
 
-    keyDown(event) {
-        if (window.utilities.activeInput()) return;
-        if (event.keyCode === 9) {
-            document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
-            document.exitPointerLock();
-            window.showWindow(window.windows.length);
-        }
-    }
-
     chatMessage(t, e, n) {
         const chatList = document.getElementById('chatList');
         for (chatList.innerHTML += n ? `<div class='chatItem'><span class='chatMsg'>${e}</span></div><br/>` : `<div class='chatItem'>${t || "unknown"}: <span class='chatMsg'>${e}</span></div><br/>`; chatList.scrollHeight >= 250;) chatList.removeChild(chatList.childNodes[0])
@@ -689,7 +680,6 @@ class Utilities {
     onLoad() {
         this.createCanvas();
         this.createMenu();
-        window.addEventListener("keydown", this.keyDown);
     }
 }
 window.utilities = new Utilities();
