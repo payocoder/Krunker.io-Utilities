@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.7
+// @version      0.1.8
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -36,7 +36,7 @@ class Utilities {
             showLeaderboard: true,
             customScope: 'https://krunker.io/textures/recticle.png',
             customScopeHideBoxes: false,
-            customHitMarker: 'https://krunker.io/textures/hitmarker.png',
+            //customHitMarker: 'https://krunker.io/textures/hitmarker.png',
             customFlashOverlay: 'https://krunker.io/img/flash.png',
             customBlood: 'https://krunker.io/img/blood.png',
             customAmmo: 'https://krunker.io/textures/ammo_0.png',
@@ -271,7 +271,7 @@ class Utilities {
                     Array.prototype.slice.call(document.querySelectorAll('.black')).forEach(el => el.style.display = t ? "none" : "block");
                 }
             },
-            customHitMarker: {
+           /* customHitMarker: {
                 name: "Hitmarker Image",
                 val: '',
                 html() {
@@ -281,7 +281,7 @@ class Utilities {
                     self.settings.customHitMarker = t;
                     document.getElementById('hitmarker').src = t.length > 1 ? t : 'https://krunker.io/textures/hitmarker.png';
                 }
-            },
+            },*/
             customAmmo: {
                 name: "Ammo Icon",
                 val: '',
