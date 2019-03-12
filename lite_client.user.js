@@ -423,11 +423,11 @@ class Utilities {
 
     keyDown(event) {
         if (window.utilities.activeInput()) return;
-        if (event.keyCode === 9) {
+        /*if (event.keyCode === 9) {
             document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
             document.exitPointerLock();
             window.showWindow(window.windows.length);
-        }
+        }*/
     }
 
     chatMessage(t, e, n) {
