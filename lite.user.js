@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.5
+// @version      0.1.6
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -54,7 +54,6 @@ class Utilities {
             streamerModeScrambleNames: false,
             autoFindNew: false,
             deathMessage: '',
-            
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -62,8 +61,11 @@ class Utilities {
 
     createCanvas() {
         const hookedCanvas = document.createElement("canvas");
+        hookedCanvas.id = "UtiltiesCanvas";
         hookedCanvas.width = innerWidth;
         hookedCanvas.height = innerHeight;
+        hookedCanvas.style.width = innerWidth;
+        hookedCanvas.style.height = innerHeight;
         window.addEventListener('resize', () => {
             hookedCanvas.width = innerWidth;
             hookedCanvas.height = innerHeight;
@@ -76,8 +78,8 @@ class Utilities {
     }
 
     createMenu() {
-        const rh = document.getElementById('rightHolder');
-        rh.insertAdjacentHTML("beforeend", "<br/><a href='javascript:;' onmouseover=\"SOUND.play('tick_0',0.1)\" onclick='showWindow(window.windows.length);' class=\"menuLink\">Utilities</a>");
+        const rh = document.getElementById('gameNameHolder').lastElementChild;
+        rh.insertAdjacentHTML("beforeend", '<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length);">Utilities</div>');
         let self = this;
         this.settingsMenu = {
             fpsCounter: {
@@ -240,6 +242,7 @@ class Utilities {
                 }
             },
             customGameName: {
+                noShow: true,
                 name: "Game Name",
                 pre: "<br><div class='setHed'>Customization</div><hr>",
                 val: '',
@@ -250,7 +253,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customGameName = t;
-                    document.getElementById('gameName').innerHTML = t.length > 1 ? t : 'Krunker';
+                    //document.getElementById('gameName').innerHTML = t.length > 1 ? t : 'Krunker';
                 }
             },
             customGameNameColor: {
@@ -258,7 +261,7 @@ class Utilities {
                 noShow: true,
                 set(t) {
                     self.settings.customGameNameColor = t;
-                    self.changeGameNameColors();
+                    //self.changeGameNameColors();
                 }
             },
             customGameNameShadow: {
@@ -266,10 +269,11 @@ class Utilities {
                 noShow: true,
                 set(t) {
                     self.settings.customGameNameShadow = t;
-                    self.changeGameNameColors();
+                    //self.changeGameNameColors();
                 }
             },
             customMenuColors: {
+                noShow: true,
                 name: "Menu Color & Shadow",
                 val: '#F8C55C',
                 html() {
@@ -278,7 +282,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customMenuColors = t;
-                    self.changeMenuColors();
+                    //self.changeMenuColors();
                 }
             },
             customMenuShadow: {
@@ -286,10 +290,11 @@ class Utilities {
                 noShow: true,
                 set(t) {
                     self.settings.customMenuShadow = t;
-                    self.changeMenuColors();
+                   // self.changeMenuColors();
                 }
             },
             customMenuHoverColors: {
+                noShow: true,
                 name: "Menu Hover Color & Shadow",
                 val: '#FFFFFF',
                 html() {
@@ -298,7 +303,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customMenuHoverColors = t;
-                    self.changeMenuColors();
+                    //self.changeMenuColors();
                 }
             },
             customMenuHoverShadow: {
@@ -306,10 +311,11 @@ class Utilities {
                 noShow: true,
                 set(t) {
                     self.settings.customMenuHoverShadow = t;
-                    self.changeMenuColors();
+                    //self.changeMenuColors();
                 }
             },
             customNameSub: {
+                noShow: true,
                 name: "NameSub Image",
                 val: '',
                 html() {
@@ -317,7 +323,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customNameSub = t;
-                    document.getElementById('nameSub').src = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
+                    //document.getElementById('nameSub').src = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
                 }
             },
             customScope: {
