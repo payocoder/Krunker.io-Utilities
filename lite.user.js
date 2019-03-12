@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.6
+// @version      0.1.7
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -43,13 +43,7 @@ class Utilities {
             customNameSub: 'https://krunker.io/img/skull.png',
             customKills: 'https://krunker.io/img/skull.png',
             customTimer: 'https://krunker.io/img/timer.png',
-            customGameName: 'Krunker',
-            customGameNameColor: '#ffffff',
-            customGameNameShadow: '#a6a6a6',
-            customMenuColors: '#F8C55C',
-            customMenuShadow: '#AE853B',
-            customMenuHoverColors: '#FFFFFF',
-            customMenuHoverShadow: '#a6a6a6', 
+            customMainLogo: 'https://krunker.io/img/krunker_logo.png',
             streamerModeHideLink: false,
             streamerModeScrambleNames: false,
             autoFindNew: false,
@@ -64,12 +58,14 @@ class Utilities {
         hookedCanvas.id = "UtiltiesCanvas";
         hookedCanvas.width = innerWidth;
         hookedCanvas.height = innerHeight;
-        hookedCanvas.style.width = innerWidth;
-        hookedCanvas.style.height = innerHeight;
-        window.addEventListener('resize', () => {
-            hookedCanvas.width = innerWidth;
-            hookedCanvas.height = innerHeight;
-        });
+        function resize() {
+            var ws = innerWidth / 1700;
+            var hs = innerHeight / 900;
+            hookedCanvas.style.width = (hs < ws ? (innerWidth / hs).toFixed(3) : 1700) + "px";
+            hookedCanvas.style.height = (ws < hs ? (innerHeight / ws).toFixed(3) : 900) + "px";
+        }
+        window.addEventListener('resize', resize);
+        resize();
         this.canvas = hookedCanvas;
         this.ctx = hookedCanvas.getContext("2d");
         const hookedUI = document.getElementById("inGameUI");
@@ -241,89 +237,16 @@ class Utilities {
                     self.settings.customCrosshairOutlineColor = t;
                 }
             },
-            customGameName: {
-                noShow: true,
-                name: "Game Name",
+            customMainLogo: {
+                name: "Main Logo",
                 pre: "<br><div class='setHed'>Customization</div><hr>",
                 val: '',
                 html() {
-                    return `<input type='text' id='customGameName' name='text' value='${self.settingsMenu.customGameName.val}' oninput='window.utilities.setSetting("customGameName", this.value)' style='float:right;margin-top:5px'/>
-                    <input type='color' id='customGameNameShadow' name='color' value='${self.settingsMenu.customGameNameShadow.val}' oninput='window.utilities.setSetting("customGameNameShadow", this.value)' style='float:right;margin-top:5px'/>
-                    <input type='color' id='customGameNameColor' name='color' value='${self.settingsMenu.customGameNameColor.val}' oninput='window.utilities.setSetting("customGameNameColor", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customMainLogo' name='text' value='${self.settingsMenu.customMainLogo.val}' oninput='window.utilities.setSetting("customMainLogo", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set(t) {
-                    self.settings.customGameName = t;
-                    //document.getElementById('gameName').innerHTML = t.length > 1 ? t : 'Krunker';
-                }
-            },
-            customGameNameColor: {
-                val: '#ffffff',
-                noShow: true,
-                set(t) {
-                    self.settings.customGameNameColor = t;
-                    //self.changeGameNameColors();
-                }
-            },
-            customGameNameShadow: {
-                val: '#a6a6a6',
-                noShow: true,
-                set(t) {
-                    self.settings.customGameNameShadow = t;
-                    //self.changeGameNameColors();
-                }
-            },
-            customMenuColors: {
-                noShow: true,
-                name: "Menu Color & Shadow",
-                val: '#F8C55C',
-                html() {
-                    return `<input type='color' id='customMenuShadow' name='color' value='${self.settingsMenu.customMenuShadow.val}' oninput='window.utilities.setSetting("customMenuShadow", this.value)' style='float:right;margin-top:5px'/>
-                    <input type='color' id='customMenuColors' name='color' value='${self.settingsMenu.customMenuColors.val}' oninput='window.utilities.setSetting("customMenuColors", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set(t) {
-                    self.settings.customMenuColors = t;
-                    //self.changeMenuColors();
-                }
-            },
-            customMenuShadow: {
-                val: '#AE853B',
-                noShow: true,
-                set(t) {
-                    self.settings.customMenuShadow = t;
-                   // self.changeMenuColors();
-                }
-            },
-            customMenuHoverColors: {
-                noShow: true,
-                name: "Menu Hover Color & Shadow",
-                val: '#FFFFFF',
-                html() {
-                    return `<input type='color' id='customMenuHoverShadow' name='color' value='${self.settingsMenu.customMenuHoverShadow.val}' oninput='window.utilities.setSetting("customMenuHoverShadow", this.value)' style='float:right;margin-top:5px'/>
-                    <input type='color' id='customMenuHoverColors' name='color' value='${self.settingsMenu.customMenuHoverColors.val}' oninput='window.utilities.setSetting("customMenuHoverColors", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set(t) {
-                    self.settings.customMenuHoverColors = t;
-                    //self.changeMenuColors();
-                }
-            },
-            customMenuHoverShadow: {
-                val: '#a6a6a6',
-                noShow: true,
-                set(t) {
-                    self.settings.customMenuHoverShadow = t;
-                    //self.changeMenuColors();
-                }
-            },
-            customNameSub: {
-                noShow: true,
-                name: "NameSub Image",
-                val: '',
-                html() {
-                    return `<input type='url' id='customNameSub' name='url' value='${self.settingsMenu.customNameSub.val}' oninput='window.utilities.setSetting("customNameSub", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set(t) {
-                    self.settings.customNameSub = t;
-                    //document.getElementById('nameSub').src = t.length > 1 ? t : 'https://krunker.io/img/sub.png';
+                    self.settings.customMainLogo = t;
+                    document.getElementById('mainLogo').src = t.length > 1 ? t : 'https://krunker.io/img/krunker_logo.png';
                 }
             },
             customScope: {
