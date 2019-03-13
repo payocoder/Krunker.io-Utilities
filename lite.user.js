@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.1.8
+// @version      0.1.9
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -21,7 +21,7 @@ class Utilities {
         this.lastURL = null;
         this.scramble = (text) => (text.replace(/.(.)?/g, '$1') + ("d"+text).replace(/.(.)?/g, '$1'));
         this.findingNew = false;
-        this.deathMsgSent = false;
+        this.deaths = 0;
         this.defaultSettings = null;
         this.settings = {
             fpsCounter: false,
@@ -48,6 +48,7 @@ class Utilities {
             streamerModeScrambleNames: false,
             autoFindNew: false,
             deathMessage: '',
+            deathCounter:false,
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -134,6 +135,17 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.deathMessage = t;
+                }
+            },
+            deathCounter: {
+                name: "Death Counter",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("deathCounter", this.checked)' ${self.settingsMenu.deathCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.deathCounter = t;
+                    document.getElementById('deathCount').style.display = t ? "inline-block" : "none";
                 }
             },
             streamerModeHideLink: {
@@ -366,71 +378,46 @@ class Utilities {
             }
         }
     }
-    
-    changeMenuColors() {
-        Array.prototype.slice.call(document.querySelectorAll("style[id='menuColors']")).forEach(el => el.remove());
 
-        let color = this.settings.customMenuColors.length > 3 ? this.settings.customMenuColors : '#F8C55C';
-        let textShadow = this.settings.customMenuShadow.length > 3 ? this.settings.customMenuShadow : '#AE853B';
-        let hcolor = this.settings.customMenuHoverColors.length > 3 ? this.settings.customMenuHoverColors : '#FFFFFF';
-        let htextShadow = this.settings.customMenuHoverShadow.length > 3 ? this.settings.customMenuHoverShadow : '#a6a6a6';
-        
-        this.addStyle('menuColors', `
-            .gButton {
-                text-transform: uppercase;
-                font-size: 30px;
-                color: ${color} !important;
-                text-shadow:
-                    0 1px 0 ${textShadow},
-                    0 2px 0 ${textShadow},
-                    0 3px 0 ${textShadow},
-                    0 4px 0 ${textShadow},
-                    0 5px 0 ${textShadow},
-                    0 6px 0 ${textShadow} !important;
+    createDeathCounter() {
+        document.getElementById("killCount").insertAdjacentHTML("afterend", `<div id="deathCount" class="countIcon" style="display: block;"><i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i>0</div>`);
+    }
+
+    createObservers() {
+        let death = new MutationObserver((mutationsList, observer) => {
+            if (mutationsList[0].target.style.display == "block") {
+                // DEATH COUNTER
+                this.deaths++;
+                if (this.settings.deathCounter) {
+                    document.getElementById('deathCount').innerHTML = `<i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i>${this.deaths}`;
+                }
+
+                // DEATH MESSAGE
+                if (this.settings.deathMessage.length) {
+                    chatInput.value = this.settings.deathMessage;
+                    chatInput.focus()
+                    window.pressButton(13);
+                    chatInput.blur();
+                }
             }
-            .gButton:hover {
-                text-decoration: none;
-                color: ${hcolor} !important;
-                text-shadow:
-                    0 1px 0 ${htextShadow},
-                    0 2px 0 ${htextShadow},
-                    0 3px 0 ${htextShadow},
-                    0 4px 0 ${htextShadow},
-                    0 5px 0 ${htextShadow},
-                    0 6px 0 ${htextShadow} !important;
+        }).observe(document.getElementById('killCardHolder'), {attributes: true, attributeFilter: ['style']});
+
+        let end = new MutationObserver((mutationsList, observer) => {
+            if (mutationsList[0].target.style.display != "none") {
+                this.deaths = 0;
             }
-        `);
-     }
-    
-    changeGameNameColors() {
-        Array.prototype.slice.call(document.querySelectorAll("style[id='nameColors']")).forEach(el => el.remove());
-        let color = this.settings.customGameNameColor.length > 3 ? this.settings.customGameNameColor : '#FFFFFF';
-        let textShadow = this.settings.customGameNameShadow.length > 3 ? this.settings.customGameNameShadow : '#a6a6a6';
-        
-        this.addStyle('nameColors', `
-            #gameName {
-                width: 100%;
-                position: absolute;
-                text-align: center;
-                font-family: 'HeaderFont';
-                margin-top: -12px;
-                font-size: 184px;
-                color: ${color};
-                text-shadow:
-                    0 1px 0 ${textShadow},
-                    0 2px 0 ${textShadow},
-                    0 3px 0 ${textShadow},
-                    0 4px 0 ${textShadow},
-                    0 5px 0 ${textShadow},
-                    0 6px 0 ${textShadow},
-                    0 7px 0 ${textShadow},
-                    0 8px 0 ${textShadow},
-                    0 9px 0 ${textShadow},
-                    0 10px 0 ${textShadow},
-                    0 11px 0 ${textShadow},
-                    0 12px 0 ${textShadow};
+        }).observe(document.getElementById('endUI'), {attributes: true, attributeFilter: ['style']});
+
+        let findnew = new MutationObserver((mutationsList, observer) => {
+            console.log(mutationsList[0].target)
+            if (this.settings.autoFindNew) {
+                if (mutationsList[0].target.style.display == "block" &&
+                    mutationsList[0].target.innerText.includes('Try seeking a new game') &&
+                    !mutationsList[0].target.innerText.includes('Kicked for inactivity')) {
+                        location = document.location.origin;
+                    }
             }
-        `);
+        }).observe(document.getElementById('instructionHolder'), {attributes: true, attributeFilter: ['style']});
     }
 
     keyDown(event) {
@@ -534,13 +521,13 @@ class Utilities {
     crosshairOpacity(t) {
         return this.settings.customCrosshair == 1 ? 0 : t;
     }
-    
+
     streamerMode() {
         if (!this.settings.streamerModeHideLink) {
             if (document.location.href.includes('/streamer')) {
                 window.history.pushState('Object', 'Title', this.lastURL);
                 this.lastURL = null;
-            }   
+            }
         } else {
             if (!document.location.href.includes('/streamer')) {
                 this.lastURL = document.location.href;
@@ -561,48 +548,19 @@ class Utilities {
         document.execCommand('copy');
         document.body.removeChild(el);
     }
-    
-    autoFindNew() {
-        if (!this.settings.autoFindNew) return;
-        if (instructions.style.display !== "none" && 
-            instructions.innerText.includes('Try seeking a new game') && 
-            !instructions.innerText.includes('Kicked for inactivity') &&
-            !this.findingNew) {
-                this.findingNew = true;
-                location = document.location.origin;
-        }
-    }
-    
-    deathMessage() {
-        if (!this.settings.deathMessage.length) return;
-        let death = document.getElementById('bloodDisplay');
-        if (death.style.display == "block" && death.style.opacity == 1) {
-            if (!this.deathMsgSent) {
-                this.deathMsgSent = true;
-                chatInput.value = this.settings.deathMessage;
-                chatInput.focus()
-                window.pressButton(13);
-                chatInput.blur();
-            }
-        } else {
-            this.deathMsgSent = false;
-        }
-    }
 
     render() {
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
         this.drawCrosshair();
         this.drawFPS();
         this.streamerMode();
-        this.autoFindNew();
-        this.deathMessage()
         requestAnimationFrame(this.render.bind(this));
     }
 
     activeInput() {
         return document.activeElement.tagName == "INPUT";
     }
-    
+
     resetSettings() {
         if (confirm("Are you sure you want to reset all your utilties settings? This will also refresh the page")) {
             Object.keys(localStorage).filter(x=>x.includes("kro_set_utilities_")).forEach(x => localStorage.removeItem(x));
@@ -629,7 +587,9 @@ class Utilities {
 
     onLoad() {
         this.createCanvas();
+        this.createDeathCounter();
         this.createMenu();
+        this.createObservers();
         window.addEventListener("keydown", this.keyDown);
     }
 }
