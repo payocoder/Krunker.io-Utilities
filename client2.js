@@ -50,6 +50,8 @@ class Utilities {
         function resize() {
             var ws = innerWidth / 1700;
             var hs = innerHeight / 900;
+            hookedCanvas.width = innerWidth;
+            hookedCanvas.height = innerHeight;
             hookedCanvas.style.width = (hs < ws ? (innerWidth / hs).toFixed(3) : 1700) + "px";
             hookedCanvas.style.height = (ws < hs ? (innerHeight / ws).toFixed(3) : 900) + "px";
         }
