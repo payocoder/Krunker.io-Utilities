@@ -133,7 +133,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.deathCounter = t;
-                    document.getElementById('deathCount').style.display = t ? "inline-block" : "none";
+                    document.getElementById('deathCounter').style.display = t ? "inline-block" : "none";
                 }
             },
             streamerModeHideLink: {
@@ -368,7 +368,7 @@ class Utilities {
     }
 
     createDeathCounter() {
-        document.getElementById("killCount").insertAdjacentHTML("afterend", `<div id="deathCount" class="countIcon" style="display: block;"><i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i>0</div>`);
+        document.getElementById("killCount").insertAdjacentHTML("afterend", `<div id="deathCounter" class="countIcon" style="display: block;"><i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i><span id="deaths" style="color: rgba(255, 255, 255, 0.7)">0</span></div>`);
     }
 
     createObservers() {
@@ -376,9 +376,7 @@ class Utilities {
             if (mutationsList[0].target.style.display == "block") {
                 // DEATH COUNTER
                 this.deaths++;
-                if (this.settings.deathCounter) {
-                    document.getElementById('deathCount').innerHTML = `<i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i>${this.deaths}`;
-                }
+                document.getElementById('deaths').innerHTML = this.deaths;
 
                 // DEATH MESSAGE
                 if (this.settings.deathMessage.length) {
