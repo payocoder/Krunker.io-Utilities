@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.2.1
+// @version      0.2.2
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -33,6 +33,7 @@ class Utilities {
             customCrosshairThickness: 2,
             customCrosshairOutline: 0,
             customCrosshairOutlineColor: '#000000',
+            customCrosshairAlwaysShow: true,
             showLeaderboard: true,
             customScope: 'https://krunker.io/textures/recticle.png',
             customScopeHideBoxes: false,
@@ -199,6 +200,16 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customCrosshairShape = parseInt(t);
+                }
+            },
+            customCrosshairAlwaysShow: {
+                name: "Always Show",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customCrosshairAlwaysShow", this.checked)' ${self.settingsMenu.customCrosshairAlwaysShow.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.customCrosshairAlwaysShow = t;
                 }
             },
             customCrosshairColor: {
@@ -495,6 +506,7 @@ class Utilities {
 
     drawCrosshair() {
         if (this.settings.customCrosshair == 0) return;
+        if (this.settings.customCrosshair == 2 && !this.settings.customCrosshairAlwaysShow && crosshair.style.opacity == 0) return;
         crosshair.style.opacity = this.crosshairOpacity(crosshair.style.opacity);
 
         let thickness = this.settings.customCrosshairThickness;
