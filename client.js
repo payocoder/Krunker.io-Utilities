@@ -6,8 +6,6 @@ class Utilities {
         };
         this.canvas = null;
         this.ctx = null;
-        this.lastURL = null;
-        this.scramble = (text) => (text.replace(/.(.)?/g, '$1') + ("d"+text).replace(/.(.)?/g, '$1'));
         this.findingNew = false;
         this.deaths = 0;
         this.defaultSettings = null;
@@ -21,6 +19,7 @@ class Utilities {
             customCrosshairThickness: 2,
             customCrosshairOutline: 0,
             customCrosshairOutlineColor: '#000000',
+            customCrosshairAlwaysShow: true,
             showLeaderboard: true,
             customScope: 'https://krunker.io/textures/recticle.png',
             customScopeHideBoxes: false,
@@ -32,8 +31,6 @@ class Utilities {
             customKills: 'https://krunker.io/img/skull.png',
             customTimer: 'https://krunker.io/img/timer.png',
             customMainLogo: 'https://krunker.io/img/krunker_logo.png',
-            streamerModeHideLink: false,
-            streamerModeScrambleNames: false,
             autoFindNew: false,
             deathMessage: '',
             deathCounter:false,
@@ -138,28 +135,6 @@ class Utilities {
                     document.getElementById('deathCounter').style.display = t ? "inline-block" : "none";
                 }
             },
-            streamerModeHideLink: {
-                name: "<a onclick='window.utilities.copyLink()' title='Click to copy real link'>Hide Link</a>",
-                pre: "<br><div class='setHed'>Streamer Mode</div><hr>",
-                val: 0,
-                html() {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("streamerModeHideLink", this.checked)' ${self.settingsMenu.streamerModeHideLink.val ? "checked" : ""}><span class='slider'></span></label>`;
-                },
-                set(t) {
-                    self.settings.streamerModeHideLink = t;
-                }
-            },
-            streamerModeScrambleNames: {
-                name: "Scramble Names",
-                val: 0,
-                html() {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("streamerModeScrambleNames", this.checked)' ${self.settingsMenu.streamerModeScrambleNames.val ? "checked" : ""}><span class='slider'></span></label>`;
-                },
-                set(t) {
-                    self.settings.streamerModeScrambleNames = t;
-                    document.getElementById('chatUI').style.display = t ? "none" : "block";
-                }
-            },
             customCrosshair: {
                 name: "Style",
                 pre: "<br><div class='setHed'>Crosshair</div><hr>",
@@ -187,6 +162,16 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customCrosshairShape = parseInt(t);
+                }
+            },
+            customCrosshairAlwaysShow: {
+                name: "Always Show",
+                val: 1,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customCrosshairAlwaysShow", this.checked)' ${self.settingsMenu.customCrosshairAlwaysShow.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.customCrosshairAlwaysShow = t;
                 }
             },
             customCrosshairColor: {
@@ -483,6 +468,7 @@ class Utilities {
 
     drawCrosshair() {
         if (this.settings.customCrosshair == 0) return;
+        if (this.settings.customCrosshair == 2 && !this.settings.customCrosshairAlwaysShow && crosshair.style.opacity == 0) return;
         crosshair.style.opacity = this.crosshairOpacity(crosshair.style.opacity);
 
         let thickness = this.settings.customCrosshairThickness;
@@ -510,38 +496,10 @@ class Utilities {
         return this.settings.customCrosshair == 1 ? 0 : t;
     }
 
-    streamerMode() {
-        if (!this.settings.streamerModeHideLink) {
-            if (document.location.href.includes('/streamer')) {
-                window.history.pushState('Object', 'Title', this.lastURL);
-                this.lastURL = null;
-            }
-        } else {
-            if (!document.location.href.includes('/streamer')) {
-                this.lastURL = document.location.href;
-                window.history.pushState('Object', 'Title', '/streamer');
-            }
-        }
-        if (this.settings.streamerModeScrambleNames) Array.prototype.slice.call(document.querySelectorAll("div[class='pInfoH'], div[class='leaderName'], div[class='leaderNameF'], div[id='kCName']")).forEach(el => el.innerHTML = this.scramble(el.innerText));
-    }
-
-    copyLink() {
-        const el = document.createElement('textarea');
-        el.value = this.lastURL;
-        el.setAttribute('readonly', '');
-        el.style.position = 'absolute';
-        el.style.left = '-9999px';
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-    }
-
     render() {
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
         this.drawCrosshair();
         this.drawFPS();
-        this.streamerMode();
         requestAnimationFrame(this.render.bind(this));
     }
 
