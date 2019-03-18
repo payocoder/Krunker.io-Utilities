@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.2.3
+// @version      0.2.4
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -35,14 +35,13 @@ class Utilities {
             showLeaderboard: true,
             customScope: 'https://krunker.io/textures/recticle.png',
             customScopeHideBoxes: false,
-            //customHitMarker: 'https://krunker.io/textures/hitmarker.png',
-            customFlashOverlay: 'https://krunker.io/img/flash.png',
+            customFlashOverlay: 'https://krunker.io/img/muzflash.png',
             customBlood: 'https://krunker.io/img/blood.png',
             customAmmo: 'https://krunker.io/textures/ammo_0.png',
             customNameSub: 'https://krunker.io/img/skull.png',
             customKills: 'https://krunker.io/img/skull.png',
             customTimer: 'https://krunker.io/img/timer.png',
-            customMainLogo: 'https://krunker.io/img/krunker_logo.png',
+            customMainLogo: 'https://krunker.io/img/krunker_logo_0.png',
             autoFindNew: false,
             deathMessage: '',
             deathCounter:false,
@@ -245,7 +244,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customMainLogo = t;
-                    document.getElementById('mainLogo').src = t.length > 1 ? t : 'https://krunker.io/img/krunker_logo.png';
+                    document.getElementById('mainLogo').src = t.length > 1 ? t : 'https://krunker.io/img/krunker_logo_' + (menuRegionLabel.innerText == "Tokyo" ? 1 : 0) + '.png';
                 }
             },
             customScope: {
@@ -270,17 +269,6 @@ class Utilities {
                     Array.prototype.slice.call(document.querySelectorAll('.black')).forEach(el => el.style.display = t ? "none" : "block");
                 }
             },
-           /* customHitMarker: {
-                name: "Hitmarker Image",
-                val: '',
-                html() {
-                    return `<input type='url' id='customHitMarker' name='url' value='${self.settingsMenu.customHitMarker.val}' oninput='window.utilities.setSetting("customHitMarker", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set(t) {
-                    self.settings.customHitMarker = t;
-                    document.getElementById('hitmarker').src = t.length > 1 ? t : 'https://krunker.io/textures/hitmarker.png';
-                }
-            },*/
             customAmmo: {
                 name: "Ammo Icon",
                 val: '',
@@ -293,14 +281,14 @@ class Utilities {
                 }
             },
             customFlashOverlay: {
-                name: "Flash Overlay",
+                name: "Muzzle Flash",
                 val: '',
                 html() {
                     return `<input type='url' id='customFlashOverlay' name='url' value='${self.settingsMenu.customFlashOverlay.val}' oninput='window.utilities.setSetting("customFlashOverlay", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set(t) {
                     self.settings.customFlashOverlay = t;
-                    document.getElementById('flashOverlay').src = t.length > 1 ? t : 'https://krunker.io/img/flash.png';
+                    document.getElementById('flashOverlay').src = t.length > 1 ? t : 'https://krunker.io/img/muzflash.png';
                 }
             },
             customKills: {
@@ -394,7 +382,6 @@ class Utilities {
         }).observe(document.getElementById('endUI'), {attributes: true, attributeFilter: ['style']});
 
         let findnew = new MutationObserver((mutationsList, observer) => {
-            console.log(mutationsList[0].target)
             if (this.settings.autoFindNew) {
                 if (mutationsList[0].target.style.display == "block" &&
                     mutationsList[0].target.innerText.includes('Try seeking a new game') &&
@@ -407,11 +394,6 @@ class Utilities {
 
     keyDown(event) {
         if (window.utilities.activeInput()) return;
-        /*if (event.keyCode === 9) {
-            document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
-            document.exitPointerLock();
-            window.showWindow(window.windows.length);
-        }*/
     }
 
     chatMessage(t, e, n) {
