@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.2.5
+// @version      0.2.6
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -43,10 +43,10 @@ class Utilities {
             customTimer: 'https://krunker.io/img/timer.png',
             customMainLogo: 'https://krunker.io/img/krunker_logo_0.png',
             autoFindNew: false,
-            deathMessage: '',
+            //deathMessage: '',
+            matchEndMessage: '',
             deathCounter: false,
-            forceChallenge: false,
-            //toggleChal(this.checked)
+            forceChallenge: false
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -127,6 +127,7 @@ class Utilities {
                     self.settings.autoFindNew = t;
                 }
             },
+            /*
             deathMessage: {
                 name: "Death Message",
                 val: '',
@@ -135,6 +136,17 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.deathMessage = t;
+                }
+            },
+            */
+            matchEndMessage: {
+                name: "Match End Message",
+                val: '',
+                html() {
+                    return `<input type='text' id='matchEndMessage' name='text' value='${self.settingsMenu.matchEndMessage.val}' oninput='window.utilities.setSetting("matchEndMessage", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.matchEndMessage = t;
                 }
             },
             deathCounter: {
@@ -377,7 +389,7 @@ class Utilities {
                 // DEATH COUNTER
                 this.deaths++;
                 document.getElementById('deaths').innerHTML = this.deaths;
-
+                /*
                 // DEATH MESSAGE
                 if (this.settings.deathMessage.length) {
                     chatInput.value = this.settings.deathMessage;
@@ -385,15 +397,21 @@ class Utilities {
                     window.pressButton(13);
                     chatInput.blur();
                 }
+                */
             }
         }).observe(document.getElementById('killCardHolder'), {attributes: true, attributeFilter: ['style']});
 
         let end = new MutationObserver((mutationsList, observer) => {
-            if (mutationsList[0].target.style.display) {
-                this.deaths = 0;
-                document.getElementById('deaths').innerHTML = this.deaths;
+            this.deaths = 0;
+            document.getElementById('deaths').innerHTML = this.deaths;
+            // MATCH END MESSAGE
+            if (this.settings.matchEndMessage.length) {
+                chatInput.value = this.settings.matchEndMessage;
+                chatInput.focus()
+                window.pressButton(13);
+                chatInput.blur();
             }
-        }).observe(document.getElementById('endUI'), {attributes: true, attributeFilter: ['style']});
+        }).observe(victorySub, {attributes: true, attributeFilter: ['src']});
 
         let findnew = new MutationObserver((mutationsList, observer) => {
             if (this.settings.autoFindNew) {
