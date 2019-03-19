@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.2.4
+// @version      0.2.5
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -44,7 +44,9 @@ class Utilities {
             customMainLogo: 'https://krunker.io/img/krunker_logo_0.png',
             autoFindNew: false,
             deathMessage: '',
-            deathCounter:false,
+            deathCounter: false,
+            forceChallenge: false,
+            //toggleChal(this.checked)
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -144,6 +146,17 @@ class Utilities {
                 set(t) {
                     self.settings.deathCounter = t;
                     document.getElementById('deathCounter').style.display = t ? "inline-block" : "none";
+                }
+            },
+            forceChallenge: {
+                name: "Force Challenge Mode",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("forceChallenge", this.checked)' ${self.settingsMenu.forceChallenge.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.forceChallenge = t;
+                    if (t && !document.getElementById('challButton').lastElementChild.firstChild.checked) document.getElementById('challButton').lastElementChild.firstChild.click();
                 }
             },
             customCrosshair: {
@@ -376,8 +389,9 @@ class Utilities {
         }).observe(document.getElementById('killCardHolder'), {attributes: true, attributeFilter: ['style']});
 
         let end = new MutationObserver((mutationsList, observer) => {
-            if (mutationsList[0].target.style.display != "none") {
+            if (mutationsList[0].target.style.display) {
                 this.deaths = 0;
+                document.getElementById('deaths').innerHTML = this.deaths;
             }
         }).observe(document.getElementById('endUI'), {attributes: true, attributeFilter: ['style']});
 
