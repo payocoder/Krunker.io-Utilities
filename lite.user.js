@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.2.6
+// @version      0.2.7
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -565,6 +565,6 @@ class Utilities {
         window.addEventListener("keydown", this.keyDown);
     }
 }
-window.addEventListener('load', function() {
+document.addEventListener("DOMContentLoaded", () => {
     window.utilities = new Utilities();
 }, false);
