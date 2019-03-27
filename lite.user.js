@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.2.8
+// @version      0.3.0
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -20,6 +20,7 @@ class Utilities {
         this.ctx = null;
         this.findingNew = false;
         this.deaths = 0;
+        this.windowOpened = false;
         this.defaultSettings = null;
         this.settings = {
             fpsCounter: false,
@@ -43,10 +44,10 @@ class Utilities {
             customTimer: 'https://krunker.io/img/timer.png',
             customMainLogo: 'https://krunker.io/img/krunker_logo_0.png',
             autoFindNew: false,
-            //deathMessage: '',
             matchEndMessage: '',
             deathCounter: false,
-            forceChallenge: false
+            forceChallenge: false,
+            hideFullMatches: false
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -71,7 +72,7 @@ class Utilities {
         this.ctx = hookedCanvas.getContext("2d");
         const hookedUI = document.getElementById("inGameUI");
         hookedUI.insertAdjacentElement("beforeend", hookedCanvas);
-        requestAnimationFrame(this.render.bind(this));
+        requestAnimationFrame(() => this.render());
     }
 
     createMenu() {
@@ -127,18 +128,6 @@ class Utilities {
                     self.settings.autoFindNew = t;
                 }
             },
-            /*
-            deathMessage: {
-                name: "Death Message",
-                val: '',
-                html() {
-                    return `<input type='text' id='deathMessage' name='text' value='${self.settingsMenu.deathMessage.val}' oninput='window.utilities.setSetting("deathMessage", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set(t) {
-                    self.settings.deathMessage = t;
-                }
-            },
-            */
             matchEndMessage: {
                 name: "Match End Message",
                 val: '',
@@ -169,6 +158,16 @@ class Utilities {
                 set(t) {
                     self.settings.forceChallenge = t;
                     if (t && !document.getElementById('challButton').lastElementChild.firstChild.checked) document.getElementById('challButton').lastElementChild.firstChild.click();
+                }
+            },
+            hideFullMatches: {
+                name: "Hide Full Matches",
+                val: 0,
+                html() {
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("hideFullMatches", this.checked)' ${self.settingsMenu.hideFullMatches.val ? "checked" : ""}><span class='slider'></span></label>`;
+                },
+                set(t) {
+                    self.settings.hideFullMatches = t;
                 }
             },
             customCrosshair: {
@@ -384,44 +383,62 @@ class Utilities {
     }
 
     createObservers() {
-        let death = new MutationObserver((mutationsList, observer) => {
-            if (mutationsList[0].target.style.display == "block") {
-                // DEATH COUNTER
-                this.deaths++;
-                document.getElementById('deaths').innerHTML = this.deaths;
-                /*
-                // DEATH MESSAGE
-                if (this.settings.deathMessage.length) {
-                    chatInput.value = this.settings.deathMessage;
-                    chatInput.focus()
-                    window.pressButton(13);
-                    chatInput.blur();
-                }
-                */
-            }
-        }).observe(document.getElementById('killCardHolder'), {attributes: true, attributeFilter: ['style']});
+        this.newObserver(crosshair, 'style', (target) => {
+            crosshair.style.opacity = this.crosshairOpacity(crosshair.style.opacity);
+        }, false);
+        
+        this.newObserver(document.getElementById('windowHolder'), 'style', (target) => {
+            this.windowOpened = target.firstElementChild.innerText.length ? true : false;
+        }, false);
 
-        let end = new MutationObserver((mutationsList, observer) => {
+        this.newObserver(document.getElementById('windowHeader'), 'childList', (target) => {
+            if (!this.windowOpened) return;
+            switch (target.innerText) {
+                case 'Server Browser':
+                    if (!this.settings.hideFullMatches) return;
+                    if (!document.querySelector('.menuSelectorHolder')) return;
+                    let pcount;
+                    [...document.querySelectorAll('.serverPCount')].filter(el => (pcount = el.innerText.split('/'), pcount[0] == pcount[1])).forEach(el => el.parentElement.remove());
+                    break;
+                default:
+                    console.log('Unused Window');
+                    break;
+            }
+        }, false);
+        
+        this.newObserver(document.getElementById('killCardHolder'), 'style', () => {
+            this.deaths++;
+            document.getElementById('deaths').innerHTML = this.deaths; 
+        });
+
+        this.newObserver(victorySub, 'src', () => {
             this.deaths = 0;
             document.getElementById('deaths').innerHTML = this.deaths;
-            // MATCH END MESSAGE
+            
             if (this.settings.matchEndMessage.length) {
                 chatInput.value = this.settings.matchEndMessage;
                 chatInput.focus()
                 window.pressButton(13);
                 chatInput.blur();
             }
-        }).observe(victorySub, {attributes: true, attributeFilter: ['src']});
-
-        let findnew = new MutationObserver((mutationsList, observer) => {
+        });
+        
+        this.newObserver(document.getElementById('instructionHolder'), 'style', (target) => {
             if (this.settings.autoFindNew) {
-                if (mutationsList[0].target.style.display == "block" &&
-                    mutationsList[0].target.innerText.includes('Try seeking a new game') &&
-                    !mutationsList[0].target.innerText.includes('Kicked for inactivity')) {
+                if (target.innerText.includes('Try seeking a new game') &&
+                    !target.innerText.includes('Kicked for inactivity')) {
                         location = document.location.origin;
                     }
             }
-        }).observe(document.getElementById('instructionHolder'), {attributes: true, attributeFilter: ['style']});
+        });
+    }
+    
+    newObserver(elm, check, callback, onshow = true) {
+        return new MutationObserver((mutationsList, observer) => {
+            if (check == 'src' || onshow && mutationsList[0].target.style.display == 'block' || !onshow) {
+                callback(mutationsList[0].target);
+            }
+        }).observe(elm, check == 'childList' ? {childList: true} : {attributes: true, attributeFilter: [check]});
     }
 
     keyDown(event) {
@@ -495,7 +512,6 @@ class Utilities {
     drawCrosshair() {
         if (this.settings.customCrosshair == 0) return;
         if (this.settings.customCrosshair == 2 && !this.settings.customCrosshairAlwaysShow && crosshair.style.opacity == 0) return;
-        crosshair.style.opacity = this.crosshairOpacity(crosshair.style.opacity);
 
         let thickness = this.settings.customCrosshairThickness;
         let outline = this.settings.customCrosshairOutline;
@@ -526,7 +542,7 @@ class Utilities {
         this.ctx.clearRect(0, 0, innerWidth, innerHeight);
         this.drawCrosshair();
         this.drawFPS();
-        requestAnimationFrame(this.render.bind(this));
+        requestAnimationFrame(() => this.render());
     }
 
     activeInput() {
@@ -566,6 +582,6 @@ class Utilities {
     }
 }
 
-window.addEventListener('load', () => {
+document.addEventListener('DOMContentLoaded', () => {
     window.utilities = new Utilities();
 }, false);
