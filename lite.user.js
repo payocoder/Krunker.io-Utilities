@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.2.7
+// @version      0.2.8
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -291,7 +291,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customScopeHideBoxes = t;
-                    Array.prototype.slice.call(document.querySelectorAll('.black')).forEach(el => el.style.display = t ? "none" : "block");
+                    [...document.querySelectorAll('.black')].forEach(el => el.style.display = t ? "none" : "block");
                 }
             },
             customAmmo: {
@@ -565,6 +565,7 @@ class Utilities {
         window.addEventListener("keydown", this.keyDown);
     }
 }
-document.addEventListener("DOMContentLoaded", () => {
+
+window.addEventListener('load', () => {
     window.utilities = new Utilities();
 }, false);
