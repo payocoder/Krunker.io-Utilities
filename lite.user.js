@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.3.0
+// @version      0.3.1
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -511,7 +511,7 @@ class Utilities {
 
     drawCrosshair() {
         if (this.settings.customCrosshair == 0) return;
-        if (this.settings.customCrosshair == 2 && !this.settings.customCrosshairAlwaysShow && crosshair.style.opacity == 0) return;
+        if (!this.settings.customCrosshairAlwaysShow && (crosshair.style.opacity == 0 && aimDot.style.opacity != 0)) return;
 
         let thickness = this.settings.customCrosshairThickness;
         let outline = this.settings.customCrosshairOutline;
