@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.3.1
+// @version      0.3.2
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -21,6 +21,7 @@ class Utilities {
         this.findingNew = false;
         this.deaths = 0;
         this.windowOpened = false;
+        this.lastMenu = '';
         this.defaultSettings = null;
         this.settings = {
             fpsCounter: false,
@@ -47,7 +48,8 @@ class Utilities {
             matchEndMessage: '',
             deathCounter: false,
             forceChallenge: false,
-            hideFullMatches: false
+            hideFullMatches: false,
+            customADSDot: 'https://krunker.io/textures/dots/dot_0.png',
         };
         this.settingsMenu = [];
         this.onLoad();
@@ -70,13 +72,13 @@ class Utilities {
         resize();
         this.canvas = hookedCanvas;
         this.ctx = hookedCanvas.getContext("2d");
-        const hookedUI = document.getElementById("inGameUI");
+        const hookedUI = inGameUI;
         hookedUI.insertAdjacentElement("beforeend", hookedCanvas);
         requestAnimationFrame(() => this.render());
     }
 
     createMenu() {
-        const rh = document.getElementById('gameNameHolder').lastElementChild;
+        const rh = gameNameHolder.lastElementChild;
         rh.insertAdjacentHTML("beforeend", '<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length);">Utilities</div>');
         let self = this;
         this.settingsMenu = {
@@ -114,7 +116,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.showLeaderboard = t;
-                    document.getElementById('leaderDisplay').style.display = t ? "block" : "none";
+                    leaderDisplay.style.display = t ? "block" : "none";
                 }
             },
             autoFindNew: {
@@ -157,7 +159,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.forceChallenge = t;
-                    if (t && !document.getElementById('challButton').lastElementChild.firstChild.checked) document.getElementById('challButton').lastElementChild.firstChild.click();
+                    if (t && !challButton.lastElementChild.firstChild.checked) challButton.lastElementChild.firstChild.click();
                 }
             },
             hideFullMatches: {
@@ -268,7 +270,18 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customMainLogo = t;
-                    document.getElementById('mainLogo').src = t.length > 1 ? t : 'https://krunker.io/img/krunker_logo_' + (menuRegionLabel.innerText == "Tokyo" ? 1 : 0) + '.png';
+                    mainLogo.src = t.length > 1 ? t : 'https://krunker.io/img/krunker_logo_' + (menuRegionLabel.innerText == "Tokyo" ? 1 : 0) + '.png';
+                }
+            },
+            customADSDot: {
+                name: "ADS Dot",
+                val: '',
+                html() {
+                    return `<input type='url' id='customADSDot' name='url' value='${self.settingsMenu.customADSDot.val}' oninput='window.utilities.setSetting("customADSDot", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customADSDot = t;
+                    aimDot.src = t.length > 1 ? t : 'https://krunker.io/textures/dots/dot_0.png';
                 }
             },
             customScope: {
@@ -279,7 +292,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customScope = t;
-                    document.getElementById('recticleImg').src = t.length > 1 ? t : 'https://krunker.io/textures/recticle.png';
+                    recticleImg.src = t.length > 1 ? t : 'https://krunker.io/textures/recticle.png';
                 }
             },
             customScopeHideBoxes: {
@@ -301,7 +314,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customAmmo = t;
-                    document.getElementById('ammoIcon').src = t.length > 1 ? t : 'https://krunker.io/textures/ammo_0.png';
+                    ammoIcon.src = t.length > 1 ? t : 'https://krunker.io/textures/ammo_0.png';
                 }
             },
             customFlashOverlay: {
@@ -312,7 +325,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customFlashOverlay = t;
-                    document.getElementById('flashOverlay').src = t.length > 1 ? t : 'https://krunker.io/img/muzflash.png';
+                    flashOverlay.src = t.length > 1 ? t : 'https://krunker.io/img/muzflash.png';
                 }
             },
             customKills: {
@@ -323,7 +336,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customKills = t;
-                    document.getElementById('killsIcon').src = t.length > 1 ? t : 'https://krunker.io/img/skull.png';
+                    killsIcon.src = t.length > 1 ? t : 'https://krunker.io/img/skull.png';
                 }
             },
             customBlood: {
@@ -334,7 +347,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customBlood = t;
-                    document.getElementById('bloodDisplay').src = t.length > 1 ? t : 'https://krunker.io/img/blood.png';
+                    bloodDisplay.src = t.length > 1 ? t : 'https://krunker.io/img/blood.png';
                 }
             },
             customTimer: {
@@ -345,7 +358,7 @@ class Utilities {
                 },
                 set(t) {
                     self.settings.customTimer = t;
-                    document.getElementById('timerIcon').src = t.length > 1 ? t : 'https://krunker.io/img/timer.png';
+                    timerIcon.src = t.length > 1 ? t : 'https://krunker.io/img/timer.png';
                 }
             },
         };
@@ -377,9 +390,14 @@ class Utilities {
             }
         }
     }
+    
+    changeProfileIcon() {
+        let index = this.getSavedVal('classindex') || 0;
+        menuMiniProfilePic.src = `https://krunker.io/textures/classes/icon_${index}.png`;
+    }
 
     createDeathCounter() {
-        document.getElementById("killCount").insertAdjacentHTML("afterend", `<div id="deathCounter" class="countIcon" style="display: block;"><i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i><span id="deaths" style="color: rgba(255, 255, 255, 0.7)">0</span></div>`);
+        killCount.insertAdjacentHTML("afterend", `<div id="deathCounter" class="countIcon" style="display: block;"><i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i><span id="deaths" style="color: rgba(255, 255, 255, 0.7)">0</span></div>`);
     }
 
     createObservers() {
@@ -387,11 +405,16 @@ class Utilities {
             crosshair.style.opacity = this.crosshairOpacity(crosshair.style.opacity);
         }, false);
         
-        this.newObserver(document.getElementById('windowHolder'), 'style', (target) => {
+        this.newObserver(windowHolder, 'style', (target) => {
             this.windowOpened = target.firstElementChild.innerText.length ? true : false;
+            if (!this.windowOpened) {
+                if (['Select Class', 'Change Loadout'].includes(this.lastMenu)) {
+                    this.changeProfileIcon();
+                }
+            }
         }, false);
 
-        this.newObserver(document.getElementById('windowHeader'), 'childList', (target) => {
+        this.newObserver(windowHeader, 'childList', (target) => {
             if (!this.windowOpened) return;
             switch (target.innerText) {
                 case 'Server Browser':
@@ -400,13 +423,18 @@ class Utilities {
                     let pcount;
                     [...document.querySelectorAll('.serverPCount')].filter(el => (pcount = el.innerText.split('/'), pcount[0] == pcount[1])).forEach(el => el.parentElement.remove());
                     break;
+                case 'Change Loadout':
+                case 'Select Class':
+                    this.changeProfileIcon();
+                    break;
                 default:
-                    console.log('Unused Window');
+                    //console.log('Unused Window');
                     break;
             }
+            this.lastMenu = target.innerText;
         }, false);
         
-        this.newObserver(document.getElementById('killCardHolder'), 'style', () => {
+        this.newObserver(killCardHolder, 'style', () => {
             this.deaths++;
             document.getElementById('deaths').innerHTML = this.deaths; 
         });
@@ -423,7 +451,7 @@ class Utilities {
             }
         });
         
-        this.newObserver(document.getElementById('instructionHolder'), 'style', (target) => {
+        this.newObserver(instructionHolder, 'style', (target) => {
             if (this.settings.autoFindNew) {
                 if (target.innerText.includes('Try seeking a new game') &&
                     !target.innerText.includes('Kicked for inactivity')) {
@@ -446,7 +474,6 @@ class Utilities {
     }
 
     chatMessage(t, e, n) {
-        const chatList = document.getElementById('chatList');
         for (chatList.innerHTML += n ? `<div class='chatItem'><span class='chatMsg'>${e}</span></div><br/>` : `<div class='chatItem'>${t || "unknown"}: <span class='chatMsg'>${e}</span></div><br/>`; chatList.scrollHeight >= 250;) chatList.removeChild(chatList.childNodes[0])
     }
 
@@ -578,6 +605,7 @@ class Utilities {
         this.createDeathCounter();
         this.createMenu();
         this.createObservers();
+        this.changeProfileIcon();
         window.addEventListener("keydown", this.keyDown);
     }
 }
