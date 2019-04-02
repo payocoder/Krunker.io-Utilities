@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.3.2
+// @version      0.3.3
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -383,7 +383,7 @@ class Utilities {
         this.defaultSettings = JSON.parse(JSON.stringify(this.settings));
         for (const key in this.settingsMenu) {
             if (this.settingsMenu[key].set) {
-                const nt = this.getSavedVal(`kro_set_utilities_${key}`);
+                const nt = getSavedVal(`kro_set_utilities_${key}`);
                 this.settingsMenu[key].val = null !== nt ? nt : this.settingsMenu[key].val;
                 "false" === this.settingsMenu[key].val && (this.settingsMenu[key].val = !1)
                 this.settingsMenu[key].set(this.settingsMenu[key].val, !0)
@@ -392,7 +392,7 @@ class Utilities {
     }
     
     changeProfileIcon() {
-        let index = this.getSavedVal('classindex') || 0;
+        let index = getSavedVal('classindex') || 0;
         menuMiniProfilePic.src = `https://krunker.io/textures/classes/icon_${index}.png`;
     }
 
@@ -587,17 +587,7 @@ class Utilities {
         if (document.getElementById(`slid_utilities_${t}`)) document.getElementById(`slid_utilities_${t}`).innerHTML = e;
         this.settingsMenu[t].set(e);
         this.settingsMenu[t].val = e;
-        this.saveVal(`kro_set_utilities_${t}`, e);
-    }
-
-    saveVal(t, e) {
-        const r = "undefined" != typeof Storage;
-        r && localStorage.setItem(t, e)
-    }
-
-    getSavedVal(t) {
-        const r = "undefined" != typeof Storage;
-        return r ? localStorage.getItem(t) : null;
+        saveVal(`kro_set_utilities_${t}`, e);
     }
 
     onLoad() {
