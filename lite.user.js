@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Krunker.io Utilities Lite
+// @name         Krunker.io Utilities Mod
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.3.3
+// @version      0.4.0
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/
 // @grant        none
@@ -14,7 +14,8 @@ class Utilities {
     constructor() {
         this.fps = {
             cur: 0,
-            times: []
+            times: [],
+            elm: null
         };
         this.canvas = null;
         this.ctx = null;
@@ -22,10 +23,10 @@ class Utilities {
         this.deaths = 0;
         this.windowOpened = false;
         this.lastMenu = '';
+        this.customImage = new Image();
         this.defaultSettings = null;
         this.settings = {
-            fpsCounter: false,
-            fpsFontSize: 10,
+            showFPS: false,
             customCrosshair: 0,
             customCrosshairShape: 0,
             customCrosshairColor: '#FFFFFF',
@@ -33,7 +34,8 @@ class Utilities {
             customCrosshairThickness: 2,
             customCrosshairOutline: 0,
             customCrosshairOutlineColor: '#000000',
-            customCrosshairAlwaysShow: true,
+            customCrosshairAlwaysShow: false,
+            customCrosshairImage: '',
             showLeaderboard: true,
             customScope: 'https://krunker.io/textures/recticle.png',
             customScopeHideBoxes: false,
@@ -78,34 +80,20 @@ class Utilities {
     }
 
     createMenu() {
+        inviteButton.insertAdjacentHTML("afterend", '\n<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length-1);">Join</div>');
         const rh = gameNameHolder.lastElementChild;
         rh.insertAdjacentHTML("beforeend", '<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length);">Utilities</div>');
         let self = this;
         this.settingsMenu = {
-            fpsCounter: {
+            showFPS: {
                 name: "Show FPS",
-                pre: "<div class='setHed'><center>Utilities Lite</center></div><div class='setHed'>Render</div><hr>",
-                val: 1,
+                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Render</div><hr>",
+                val: false,
                 html() {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("fpsCounter", this.checked)' ${self.settingsMenu.fpsCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showFPS", this.checked)' ${self.settingsMenu.showFPS.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
                 set(t) {
-                    self.settings.fpsCounter = t;
-                }
-            },
-            fpsFontSize: {
-                name: "FPS Font Size",
-                val: 10,
-                html() {
-                    return `<select class="floatR" onchange="window.utilities.setSetting('fpsFontSize', this.value)">
-                    <option value="10"${self.settingsMenu.fpsFontSize.val == 10 ? " selected" : ""}>Small</option>
-                    <option value="14"${self.settingsMenu.fpsFontSize.val == 14 ? " selected" : ""}>Medium</option>
-                    <option value="20"${self.settingsMenu.fpsFontSize.val == 20 ? " selected" : ""}>Large</option>
-                    <option value="26"${self.settingsMenu.fpsFontSize.val == 26 ? " selected" : ""}>Giant</option>
-                    </select>`
-                },
-                set(t) {
-                    self.settings.fpsFontSize = parseInt(t);
+                    self.settings.showFPS = t;
                 }
             },
             showLeaderboard: {
@@ -122,7 +110,7 @@ class Utilities {
             autoFindNew: {
                 name: "New Lobby Finder",
                 pre: "<br><div class='setHed'>Features</div><hr>",
-                val: 0,
+                val: false,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("autoFindNew", this.checked)' ${self.settingsMenu.autoFindNew.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
@@ -142,7 +130,7 @@ class Utilities {
             },
             deathCounter: {
                 name: "Death Counter",
-                val: 0,
+                val: false,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("deathCounter", this.checked)' ${self.settingsMenu.deathCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
@@ -153,7 +141,7 @@ class Utilities {
             },
             forceChallenge: {
                 name: "Force Challenge Mode",
-                val: 0,
+                val: false,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("forceChallenge", this.checked)' ${self.settingsMenu.forceChallenge.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
@@ -164,7 +152,7 @@ class Utilities {
             },
             hideFullMatches: {
                 name: "Hide Full Matches",
-                val: 0,
+                val: false,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("hideFullMatches", this.checked)' ${self.settingsMenu.hideFullMatches.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
@@ -178,13 +166,29 @@ class Utilities {
                 val: 0,
                 html() {
                     return `<select class="floatR" onchange="window.utilities.setSetting('customCrosshair', this.value)">
-                    <option value="0"${self.settingsMenu.customCrosshair.val == 0 ? " selected" : ""}>Original</option>
+                    <option value="0"${self.settingsMenu.customCrosshair.val == 0 ? " selected" : ""}>Normal</option>
                     <option value="1"${self.settingsMenu.customCrosshair.val == 1 ? " selected" : ""}>Custom</option>
-                    <option value="2"${self.settingsMenu.customCrosshair.val == 2 ? " selected" : ""}>Both</option>
+                    <option value="2"${self.settingsMenu.customCrosshair.val == 2 ? " selected" : ""}>Custom & Normal</option>
                     </select>`
                 },
                 set(t) {
                     self.settings.customCrosshair = parseInt(t);
+                    self.ctx.clearRect(0, 0, innerWidth, innerHeight);
+                }
+            },
+            customCrosshairImage: {
+                name: "Image",
+                val: '',
+                html() {
+                    return `<input type='url' id='customCrosshairImage' name='text' value='${self.settingsMenu.customCrosshairImage.val}' oninput='window.utilities.setSetting("customCrosshairImage", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set(t) {
+                    self.settings.customCrosshairImage = t;
+                    if (self.customImage.src != t) {
+                        if (t.length) {
+                            self.customImage.src = t;
+                        }
+                    } 
                 }
             },
             customCrosshairShape: {
@@ -195,6 +199,7 @@ class Utilities {
                     <option value="0"${self.settingsMenu.customCrosshairShape.val == 0 ? " selected" : ""}>Cross</option>
                     <option value="1"${self.settingsMenu.customCrosshairShape.val == 1 ? " selected" : ""}>Hollow Circle</option>
                     <option value="2"${self.settingsMenu.customCrosshairShape.val == 2 ? " selected" : ""}>Filled Circle</option>
+                    <option value="3"${self.settingsMenu.customCrosshairShape.val == 3 ? " selected" : ""}>Image</option>
                     </select>`
                 },
                 set(t) {
@@ -203,7 +208,7 @@ class Utilities {
             },
             customCrosshairAlwaysShow: {
                 name: "Always Show",
-                val: 1,
+                val: false,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customCrosshairAlwaysShow", this.checked)' ${self.settingsMenu.customCrosshairAlwaysShow.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
@@ -297,7 +302,7 @@ class Utilities {
             },
             customScopeHideBoxes: {
                 name: "Hide Black Boxes",
-                val: 0,
+                val: false,
                 html() {
                     return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customScopeHideBoxes", this.checked)' ${self.settingsMenu.customScopeHideBoxes.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
@@ -360,20 +365,27 @@ class Utilities {
                     self.settings.customTimer = t;
                     timerIcon.src = t.length > 1 ? t : 'https://krunker.io/img/timer.png';
                 }
-            },
+            }
         };
         window.windows.push({
-            header: "Utilities Lite",
-            html: "",
-            gen: function () {
-                var t = "";
+            header: "Join",
+            gen: () => {
+                return `<input id='gameURL' type='text' placeholder='Enter Game URL/Code' class='accountInput' style='margin-top:0' value=''></input>
+                <div class='accountButton' onclick='window.utilities.joinGame()', style='width:100%'>Join</div>`;
+            }
+        });
+        window.windows.push({
+            header: "Utilities",
+            gen: () => {
+                var tmpHTML = "";
                 for (var key in window.utilities.settingsMenu) {
                     if (window.utilities.settingsMenu[key].noShow) continue;
-                    window.utilities.settingsMenu[key].pre && (t += window.utilities.settingsMenu[key].pre),
-                    t += "<div class=\'settName\'>" + window.utilities.settingsMenu[key].name + " " + window.utilities.settingsMenu[key].html() + "</div>";
+                    if (window.utilities.settingsMenu[key].pre) tmpHTML += window.utilities.settingsMenu[key].pre;
+                    tmpHTML += "<div class='settName'>" + window.utilities.settingsMenu[key].name +
+                        " " + window.utilities.settingsMenu[key].html() + "</div>";
                 }
-                t += "<a onclick='window.utilities.resetSettings()' class='menuLink'>Reset Settings</a>";
-                return t;
+                tmpHTML += "<br><a onclick='window.utilities.resetSettings()' class='menuLink'>Reset Settings</a>";
+                return tmpHTML;
             }
         });
         this.setupSettings();
@@ -391,17 +403,49 @@ class Utilities {
         }
     }
     
+    joinGame() {
+        let code = gameURL.value || '';
+        if (code.match(/^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?(server|party|game)=.+)$/)) {
+            location = code;
+        } else if (code.match(/^([A-Z]+):(\w+)$/)) {
+            location = location.origin + "/?game=" + code;
+        }
+    }
+    
     changeProfileIcon() {
         let index = getSavedVal('classindex') || 0;
         menuMiniProfilePic.src = `https://krunker.io/textures/classes/icon_${index}.png`;
     }
 
+    createFPSDisplay() {
+        const el = document.createElement("div");
+        el.id = "fps";
+        el.style.position = "absolute";
+        el.style.color = "green";
+        el.style.top = "0.4em";
+        el.style.left = "20px";
+        el.style.fontSize = "8pt";
+        this.fps.elm = el;
+        document.getElementById("gameUI").appendChild(el);
+    }
+    
+    updateFPS() {
+        if (!this.settings.showFPS) return;
+        const now = performance.now();
+        for (; this.fps.times.length > 0 && this.fps.times[0] <= now - 1e3;) this.fps.times.shift();
+        this.fps.times.push(now);
+        this.fps.cur = this.fps.times.length;
+        this.fps.elm.innerHTML = this.fps.cur;
+        this.fps.elm.style.color = this.fps.cur > 50 ? 'green' : (this.fps.cur < 30 ? 'red' : 'orange');
+    }
+
     createDeathCounter() {
-        killCount.insertAdjacentHTML("afterend", `<div id="deathCounter" class="countIcon" style="display: block;"><i class="material-icons" style="color:#fff;font-size:35px;margin-right:8px">error</i><span id="deaths" style="color: rgba(255, 255, 255, 0.7)">0</span></div>`);
+        killCount.insertAdjacentHTML("afterend", `\n<div id="deathCounter" class="countIcon" style="display: none;"><i class="material-icons" style="color:red;font-size:35px;margin-right:8px">error</i><span id="deaths" style="color: rgba(255, 255, 255, 0.7)">0</span></div>`);
     }
 
     createObservers() {
         this.newObserver(crosshair, 'style', (target) => {
+            if (this.settings.customCrosshair == 0) return;
             crosshair.style.opacity = this.crosshairOpacity(crosshair.style.opacity);
         }, false);
         
@@ -444,10 +488,7 @@ class Utilities {
             document.getElementById('deaths').innerHTML = this.deaths;
             
             if (this.settings.matchEndMessage.length) {
-                chatInput.value = this.settings.matchEndMessage;
-                chatInput.focus()
-                window.pressButton(13);
-                chatInput.blur();
+                this.sendMessage(this.settings.matchEndMessage);
             }
         });
         
@@ -468,40 +509,16 @@ class Utilities {
             }
         }).observe(elm, check == 'childList' ? {childList: true} : {attributes: true, attributeFilter: [check]});
     }
-
-    keyDown(event) {
-        if (window.utilities.activeInput()) return;
-    }
-
-    chatMessage(t, e, n) {
-        for (chatList.innerHTML += n ? `<div class='chatItem'><span class='chatMsg'>${e}</span></div><br/>` : `<div class='chatItem'>${t || "unknown"}: <span class='chatMsg'>${e}</span></div><br/>`; chatList.scrollHeight >= 250;) chatList.removeChild(chatList.childNodes[0])
-    }
-
-    addStyle(id, css) {
-        var head = document.head || document.getElementsByTagName('head')[0];
-        if (head) {
-            var style = document.createElement("style");
-            style.id = id;
-            style.type = "text/css";
-            style.appendChild(document.createTextNode(css));
-            head.appendChild(style);
-        }
+    
+    sendMessage(msg) {
+        chatInput.value = msg;
+        chatInput.focus()
+        window.pressButton(13);
+        chatInput.blur();
     }
 
     pixelTranslate(ctx, x, y) {
         ctx.translate(~~x, ~~y);
-    }
-
-    text(txt, font, color, x, y) {
-        this.ctx.save();
-        this.pixelTranslate(this.ctx, x, y);
-        this.ctx.fillStyle = color;
-        this.ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-        this.ctx.font = font;
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeText(txt, 0, 0);
-        this.ctx.fillText(txt, 0, 0);
-        this.ctx.restore();
     }
 
     rect(x, y, ox, oy, w, h, color, fill) {
@@ -525,20 +542,33 @@ class Utilities {
         this.ctx.closePath();
         this.ctx.restore();
     }
-
-    drawFPS() {
-        if (!this.settings.fpsCounter) return;
-        const now = performance.now();
-        for (; this.fps.times.length > 0 && this.fps.times[0] <= now - 1e3;) this.fps.times.shift();
-        this.fps.times.push(now);
-        this.fps.cur = this.fps.times.length;
-        this.text(this.fps.cur, `${this.settings.fpsFontSize}px GameFont`, this.fps.cur > 50 ? 'green' : (this.fps.cur < 30 ? 'red' : 'orange'), 20, 8 + this.settings.fpsFontSize);
-        this.text("Krunker Utilities", `7px GameFont`, "rgba(255,255,255, 0.3)", this.canvas.width - 100, 15);
+    
+    image(x, y, img, ox, oy) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+        this.ctx.beginPath();
+        this.ctx.drawImage(img, ox, oy);
+        this.ctx.closePath();
+        this.ctx.restore();
+        this.drawn = true;
     }
+
+    createWatermark() {
+        const el = document.createElement("div");
+        el.id = "watermark";
+        el.style.position = "absolute";
+        el.style.color = "rgba(50,205,50, 0.3)";
+        el.style.bottom = "0";
+        el.style.left = "20px";
+        el.style.fontSize = "6pt";
+        el.innerHTML = "Krunker.io Utilities Mod";
+        document.getElementById("gameUI").appendChild(el);
+    }
+
 
     drawCrosshair() {
         if (this.settings.customCrosshair == 0) return;
-        if (!this.settings.customCrosshairAlwaysShow && (crosshair.style.opacity == 0 && aimDot.style.opacity != 0)) return;
+        if (!this.settings.customCrosshairAlwaysShow && (aimDot.style.opacity != "0" || aimRecticle.style.opacity != "0")) return;
 
         let thickness = this.settings.customCrosshairThickness;
         let outline = this.settings.customCrosshairOutline;
@@ -555,6 +585,8 @@ class Utilities {
 
             this.rect(cx - length, cy - (thickness / 2), 0, 0, (length * 2) , thickness, this.settings.customCrosshairColor, true);
             this.rect(cx - (thickness * 0.50), cy - length, 0, 0, thickness, length * 2, this.settings.customCrosshairColor, true);
+        } else if (this.settings.customCrosshairShape == 3) {
+            this.image(0, 0, this.customImage, cx - (this.customImage.width / 2), cy - (this.customImage.height / 2));
         } else {
             if (outline > 0) this.circle(cx, cy, length, thickness + (outline * 2), this.settings.customCrosshairOutlineColor);
             this.circle(cx, cy, length, thickness, this.settings.customCrosshairColor, this.settings.customCrosshairShape == 2);
@@ -566,14 +598,10 @@ class Utilities {
     }
 
     render() {
-        this.ctx.clearRect(0, 0, innerWidth, innerHeight);
+        if (this.settings.customCrosshair != 0) this.ctx.clearRect(0, 0, innerWidth, innerHeight);
         this.drawCrosshair();
-        this.drawFPS();
+        this.updateFPS();
         requestAnimationFrame(() => this.render());
-    }
-
-    activeInput() {
-        return document.activeElement.tagName == "INPUT";
     }
 
     resetSettings() {
@@ -592,11 +620,12 @@ class Utilities {
 
     onLoad() {
         this.createCanvas();
+        this.createFPSDisplay();
+        this.createWatermark();
         this.createDeathCounter();
         this.createMenu();
         this.createObservers();
         this.changeProfileIcon();
-        window.addEventListener("keydown", this.keyDown);
     }
 }
 
