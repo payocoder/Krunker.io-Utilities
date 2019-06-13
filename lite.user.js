@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.4.2
+// @version      0.4.3
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?.+)$/
 // @grant        none
@@ -12,63 +12,30 @@
 
 class Utilities {
     constructor() {
-        this.fps = {
-            times: [],
-            elm: null
-        };
         this.findingNew = false;
         this.deaths = 0;
-        this.windowOpened = false;
-        this.lastMenu = '';
         this.lastSent = 0;
         this.settings = null;
         this.onLoad();
-    }
-
-    createCanvas() {
-        const hookedCanvas = document.createElement("canvas");
-        hookedCanvas.id = "UtiltiesCanvas";
-        hookedCanvas.width = innerWidth;
-        hookedCanvas.height = innerHeight;
-        function resize() {
-            var ws = innerWidth / 1700;
-            var hs = innerHeight / 900;
-            hookedCanvas.width = innerWidth;
-            hookedCanvas.height = innerHeight;
-            hookedCanvas.style.width = (hs < ws ? (innerWidth / hs).toFixed(3) : 1700) + "px";
-            hookedCanvas.style.height = (ws < hs ? (innerHeight / ws).toFixed(3) : 900) + "px";
-        }
-        window.addEventListener('resize', resize);
-        resize();
-        this.canvas = hookedCanvas;
-        this.ctx = hookedCanvas.getContext("2d");
-        const hookedUI = inGameUI;
-        hookedUI.insertAdjacentElement("beforeend", hookedCanvas);
-        window.requestAnimationFrame(_ => this.render());
+        this.hexToRGB = hex => hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+            (m, r, g, b) => '#' + r + r + g + g + b + b)
+            .substring(1).match(/.{2}/g)
+            .map(x => parseInt(x, 16));
     }
 
     createSettings() {
         inviteButton.insertAdjacentHTML("afterend", '\n<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length-1);">Join</div>');
         const rh = gameNameHolder.lastElementChild;
         rh.insertAdjacentHTML("beforeend", '<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length);">Utilities</div>');
-        let self = this;
+        const selectStyle = `border: none; background: #eee; padding: 4px; float: right; margin-left: 10px;`;
+        const textInputStyle = `border: none; background: #eee; padding: 6px; padding-bottom: 6px; float: right;`;
         this.settings = {
-            showFPS: {
-                name: "Show FPS",
-                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Render</div><hr>",
-                val: false,
-                html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showFPS", this.checked)' ${self.settings.showFPS.val ? "checked" : ""}><span class='slider'></span></label>`;
-                },
-                set: val => {
-                    self.fps.elm.style.display = val ? "block" : "none";
-                }
-            },
             showLeaderboard: {
                 name: "Show Leaderboard",
+                pre: "<div class='setHed'><center>Utilities</center></div><div class='setHed'>Render</div><hr>",
                 val: true,
                 html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showLeaderboard", this.checked)' ${self.settings.showLeaderboard.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("showLeaderboard", this.checked)' ${this.settings.showLeaderboard.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
                 set: val => {
                     leaderDisplay.style.display = val ? "block" : "none";
@@ -79,21 +46,21 @@ class Utilities {
                 pre: "<br><div class='setHed'>Features</div><hr>",
                 val: false,
                 html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("autoFindNew", this.checked)' ${self.settings.autoFindNew.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("autoFindNew", this.checked)' ${this.settings.autoFindNew.val ? "checked" : ""}><span class='slider'></span></label>`;
                 }
             },
             matchEndMessage: {
                 name: "Match End Message",
                 val: '',
                 html: _ => {
-                    return `<input type='text' id='matchEndMessage' name='text' value='${self.settings.matchEndMessage.val}' oninput='window.utilities.setSetting("matchEndMessage", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='text' id='matchEndMessage' placeholder='Match End Message' name='text' style='${textInputStyle}' value='${this.settings.matchEndMessage.val}' oninput='window.utilities.setSetting("matchEndMessage", this.value)' style='float:right;margin-top:5px'/>`
                 }
             },
             deathCounter: {
                 name: "Death Counter",
                 val: false,
                 html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("deathCounter", this.checked)' ${self.settings.deathCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("deathCounter", this.checked)' ${this.settings.deathCounter.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
                 set: val => {
                     document.getElementById('deathCounter').style.display = val ? "inline-block" : "none";
@@ -103,24 +70,17 @@ class Utilities {
                 name: "Force Challenge Mode",
                 val: false,
                 html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("forceChallenge", this.checked)' ${self.settings.forceChallenge.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("forceChallenge", this.checked)' ${this.settings.forceChallenge.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
                 set: val => {
                     if (val && !challButton.lastElementChild.firstChild.checked) challButton.lastElementChild.firstChild.click();
-                }
-            },
-            hideFullMatches: {
-                name: "Hide Full Matches",
-                val: false,
-                html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("hideFullMatches", this.checked)' ${self.settings.hideFullMatches.val ? "checked" : ""}><span class='slider'></span></label>`;
                 }
             },
             autoMod: {
                 name: "Auto Load Mod",
                 val: '',
                 html: _ => {
-                    return `<input type='text' id='autoMod' name='text' value='${self.settings.autoMod.val}' oninput='window.utilities.setSetting("autoMod", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='text' id='autoMod' placeholder='Mod URL' name='text' style='${textInputStyle}' value='${this.settings.autoMod.val}' oninput='window.utilities.setSetting("autoMod", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
                     if (val.length > 1) loadModPack(val, true);
@@ -131,22 +91,20 @@ class Utilities {
                 pre: "<br><div class='setHed'>Crosshair</div><hr>",
                 val: 0,
                 html: _ => {
-                    return `<select class="floatR" onchange="window.utilities.setSetting('customCrosshair', this.value)">
-                    <option value="0"${self.settings.customCrosshair.val == 0 ? " selected" : ""}>Normal</option>
-                    <option value="1"${self.settings.customCrosshair.val == 1 ? " selected" : ""}>Custom</option>
-                    <option value="2"${self.settings.customCrosshair.val == 2 ? " selected" : ""}>Custom & Normal</option>
+                    return `<select style='${selectStyle}' onchange="window.utilities.setSetting('customCrosshair', this.value)">
+                    <option value="0"${this.settings.customCrosshair.val == 0 ? " selected" : ""}>Normal</option>
+                    <option value="1"${this.settings.customCrosshair.val == 1 ? " selected" : ""}>Custom</option>
+                    <option value="2"${this.settings.customCrosshair.val == 2 ? " selected" : ""}>Custom & Normal</option>
                     </select>`
                 },
                 set: val => {
-                    let options = ['customCrosshairShape', 'customCrosshairAlwaysShow', 'customCrosshairColor', 'customCrosshairLength', 'customCrosshairThickness'];
+                    let options = ['customCrosshairShape', 'customCrosshairAlwaysShow', 'customCrosshairShadow', 'customCrosshairColor', 'customCrosshairLength', 'customCrosshairThickness'];
                     for (let opt of options) {
-                        self.settings[opt].hide = val == 0;
+                        this.settings[opt].hide = val == 0;
                         let doc = document.getElementById(opt + '_div');
                         if (doc) doc.style.display = val == 0 ? 'none' : 'block';
                     }
-                    self.settings.customCrosshairImage.hide = val == 0 ? true : !(self.settings.customCrosshairShape.val == 3);
-                    let doc = document.getElementById('customCrosshairImage_div');
-                    if (doc) doc.style.display = self.settings.customCrosshairImage.hide ? 'none' : 'block';
+                    this.settings.customCrosshairShape.set(this.settings.customCrosshairShape.val);
                 }
             },
             customCrosshairShape: {
@@ -154,17 +112,22 @@ class Utilities {
                 val: 0,
                 hide: true,
                 html: _ => {
-                    return `<select class="floatR" onchange="window.utilities.setSetting('customCrosshairShape', this.value)">
-                    <option value="0"${self.settings.customCrosshairShape.val == 0 ? " selected" : ""}>Cross</option>
-                    <option value="1"${self.settings.customCrosshairShape.val == 1 ? " selected" : ""}>Hollow Circle</option>
-                    <option value="2"${self.settings.customCrosshairShape.val == 2 ? " selected" : ""}>Filled Circle</option>
-                    <option value="3"${self.settings.customCrosshairShape.val == 3 ? " selected" : ""}>Image</option>
+                    return `<select style='${selectStyle}' onchange="window.utilities.setSetting('customCrosshairShape', this.value)">
+                    <option value="0"${this.settings.customCrosshairShape.val == 0 ? " selected" : ""}>Cross</option>
+                    <option value="1"${this.settings.customCrosshairShape.val == 1 ? " selected" : ""}>Hollow Circle</option>
+                    <option value="2"${this.settings.customCrosshairShape.val == 2 ? " selected" : ""}>Solid Circle</option>
+                    <option value="3"${this.settings.customCrosshairShape.val == 3 ? " selected" : ""}>Image</option>
+                    <option value="4"${this.settings.customCrosshairShape.val == 4 ? " selected" : ""}>Hollow Square</option>
+                    <option value="5"${this.settings.customCrosshairShape.val == 5 ? " selected" : ""}>Solid Square</option>
                     </select>`
                 },
                 set: val => {
-                    self.settings.customCrosshairImage.hide = self.settings.customCrosshair.val == 0 ? true: !(val == 3);
+                    this.settings.customCrosshairImage.hide = this.settings.customCrosshair.val == 0 ? true: !(val == 3);
+                    this.settings.customCrosshairShadow.hide = this.settings.customCrosshair.val == 0 ? true: val == 3;
                     let doc = document.getElementById('customCrosshairImage_div');
-                    if (doc) doc.style.display = self.settings.customCrosshairImage.hide ? 'none' : 'block';
+                    if (doc) doc.style.display = this.settings.customCrosshairImage.hide ? 'none' : 'block';
+                    doc = document.getElementById('customCrosshairShadow_div');
+                    if (doc) doc.style.display = this.settings.customCrosshairShadow.hide ? 'none' : 'block';
                 }
             },
             customCrosshairImage: {
@@ -172,7 +135,7 @@ class Utilities {
                 val: '',
                 hide: true,
                 html: _ => {
-                    return `<input type='url' id='customCrosshairImage' name='text' value='${self.settings.customCrosshairImage.val}' oninput='window.utilities.setSetting("customCrosshairImage", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customCrosshairImage' placeholder='Crosshair Image URL' name='text' style='${textInputStyle}' value='${this.settings.customCrosshairImage.val}' oninput='window.utilities.setSetting("customCrosshairImage", this.value)' style='float:right;margin-top:5px'/>`
                 }
             },
             customCrosshairAlwaysShow: {
@@ -180,7 +143,15 @@ class Utilities {
                 val: false,
                 hide: true,
                 html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customCrosshairAlwaysShow", this.checked)' ${self.settings.customCrosshairAlwaysShow.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customCrosshairAlwaysShow", this.checked)' ${this.settings.customCrosshairAlwaysShow.val ? "checked" : ""}><span class='slider'></span></label>`;
+                }
+            },
+            customCrosshairShadow: {
+                name: "Shadow",
+                val: '#000000',
+                hide: true,
+                html: _ => {
+                    return `<input type='color' id='crosshairShadow' name='color' value='${this.settings.customCrosshairShadow.val}' oninput='window.utilities.setSetting("customCrosshairShadow", this.value)' style='float:right;margin-top:5px'/>`
                 }
             },
             customCrosshairColor: {
@@ -188,7 +159,7 @@ class Utilities {
                 val: "#ffffff",
                 hide: true,
                 html: _ => {
-                    return `<input type='color' id='crosshairColor' name='color' value='${self.settings.customCrosshairColor.val}' oninput='window.utilities.setSetting("customCrosshairColor", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='color' id='crosshairColor' name='color' value='${this.settings.customCrosshairColor.val}' oninput='window.utilities.setSetting("customCrosshairColor", this.value)' style='float:right;margin-top:5px'/>`
                 }
             },
             customCrosshairLength: {
@@ -196,7 +167,7 @@ class Utilities {
                 val: 16,
                 hide: true,
                 html: _ => {
-                    return `<span class='sliderVal' id='slid_utilities_customCrosshairLength'>${self.settings.customCrosshairLength.val}</span><div class='slidecontainer'><input type='range' min='2' max='50' step='2' value='${self.settings.customCrosshairLength.val}' class='sliderM' oninput="window.utilities.setSetting('customCrosshairLength', this.value)"></div>`
+                    return `<span class='sliderVal' id='slid_utilities_customCrosshairLength'>${this.settings.customCrosshairLength.val}</span><div class='slidecontainer'><input type='range' min='2' max='50' step='2' value='${this.settings.customCrosshairLength.val}' class='sliderM' oninput="window.utilities.setSetting('customCrosshairLength', this.value)"></div>`
                 }
             },
             customCrosshairThickness: {
@@ -204,59 +175,32 @@ class Utilities {
                 val: 2,
                 hide: true,
                 html: _ => {
-                    return `<span class='sliderVal' id='slid_utilities_customCrosshairThickness'>${self.settings.customCrosshairThickness.val}</span><div class='slidecontainer'><input type='range' min='2' max='20' step='2' value='${self.settings.customCrosshairThickness.val}' class='sliderM' oninput="window.utilities.setSetting('customCrosshairThickness', this.value)"></div>`
+                    return `<span class='sliderVal' id='slid_utilities_customCrosshairThickness'>${this.settings.customCrosshairThickness.val}</span><div class='slidecontainer'><input type='range' min='2' max='20' step='2' value='${this.settings.customCrosshairThickness.val}' class='sliderM' oninput="window.utilities.setSetting('customCrosshairThickness', this.value)"></div>`
                 }
             },
-            /*
-            customCrosshairOutline: {
-                name: "Outline",
-                val: 0,
-                html: _ => {
-                    return `<span class='sliderVal' id='slid_utilities_customCrosshairOutline'>${self.settings.customCrosshairOutline.val}</span><div class='slidecontainer'><input type='range' min='0' max='10' step='1' value='${self.settings.customCrosshairOutline.val}' class='sliderM' oninput="window.utilities.setSetting('customCrosshairOutline', this.value)"></div>`
-                },
-            },
-            customCrosshairOutlineColor: {
-                name: "Outline Color",
-                val: "#000000",
-                html: _ => {
-                    return `<input type='color' id='crosshairOutlineColor' name='color' value='${self.settings.customCrosshairOutlineColor.val}' oninput='window.utilities.setSetting("customCrosshairOutlineColor", this.value)' style='float:right;margin-top:5px'/>`
-                }
-            },
-            customMainLogo: {
-                name: "Main Logo",
-                pre: "<br><div class='setHed'>Customization</div><hr>",
-                val: '',
-                html: _ => {
-                    return `<input type='url' id='customMainLogo' name='text' value='${self.settings.customMainLogo.val}' oninput='window.utilities.setSetting("customMainLogo", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set: val => {
-                    mainLogo.src = val.length > 1 ? val : location.origin + '/img/krunker_logo_' + (menuRegionLabel.innerText == "Tokyo" ? 1 : 0) + '.png';
-                }
-            },
-            */
             customADSDot: {
                 name: "ADSDot Image",
                 pre: "<br><div class='setHed'>Customization</div><hr>",
                 val: '',
                 html: _ => {
-                    return `<input type='url' id='customADSDot' name='url' value='${self.settings.customADSDot.val}' oninput='window.utilities.setSetting("customADSDot", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customADSDot' placeholder='ADSDot URL' name='url' style='${textInputStyle}' value='${this.settings.customADSDot.val}' oninput='window.utilities.setSetting("customADSDot", this.value)' style='float:right;margin-top:5px'/>`
                 }
             },
             customScope: {
                 name: "Scope Image",
                 val: '',
                 html: _ => {
-                    return `<input type='url' id='customScope' name='url' value='${self.settings.customScope.val}' oninput='window.utilities.setSetting("customScope", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customScope' placeholder='Scope Image URL' name='url' style='${textInputStyle}' value='${this.settings.customScope.val}' oninput='window.utilities.setSetting("customScope", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
-                    recticleImg.src = val.length > 1 ? val : 'https://krunker.io/textures/recticle.png';
+                    recticleImg.src = val.length > 1 ? val : location.origin + '/textures/recticle.png';
                 }
             },
             customScopeHideBoxes: {
                 name: "Hide Black Boxes",
                 val: false,
                 html: _ => {
-                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customScopeHideBoxes", this.checked)' ${self.settings.customScopeHideBoxes.val ? "checked" : ""}><span class='slider'></span></label>`;
+                    return `<label class='switch'><input type='checkbox' onclick='window.utilities.setSetting("customScopeHideBoxes", this.checked)' ${this.settings.customScopeHideBoxes.val ? "checked" : ""}><span class='slider'></span></label>`;
                 },
                 set: val => {
                     [...document.querySelectorAll('.black')].forEach(el => el.style.display = val ? "none" : "block");
@@ -266,7 +210,7 @@ class Utilities {
                 name: "Ammo Icon",
                 val: '',
                 html: _ => {
-                    return `<input type='url' id='customAmmo' name='url' value='${self.settings.customAmmo.val}' oninput='window.utilities.setSetting("customAmmo", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customAmmo' placeholder='Ammo Icon URL' name='url' style='${textInputStyle}' value='${this.settings.customAmmo.val}' oninput='window.utilities.setSetting("customAmmo", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
                     ammoIcon.src = val.length > 1 ? val : location.origin + '/textures/ammo_0.png';
@@ -276,7 +220,7 @@ class Utilities {
                 name: "Muzzle Flash Image",
                 val: '',
                 html: _ => {
-                    return `<input type='url' id='customFlashOverlay' name='url' value='${self.settings.customFlashOverlay.val}' oninput='window.utilities.setSetting("customFlashOverlay", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customFlashOverlay' placeholder='Muzzle Flash URL' name='url' style='${textInputStyle}' value='${this.settings.customFlashOverlay.val}' oninput='window.utilities.setSetting("customFlashOverlay", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
                     flashOverlay.src = val.length > 1 ? val : location.origin + '/img/muzflash.png';
@@ -286,17 +230,27 @@ class Utilities {
                 name: "Kill Icon",
                 val: '',
                 html: _ => {
-                    return `<input type='url' id='customKills' name='url' value='${self.settings.customKills.val}' oninput='window.utilities.setSetting("customKills", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customKills' placeholder='Kill Icon URL' name='url' style='${textInputStyle}' value='${this.settings.customKills.val}' oninput='window.utilities.setSetting("customKills", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
                     killsIcon.src = val.length > 1 ? val : location.origin + '/img/skull.png';
+                }
+            },
+            customDeaths: {
+                name: "Death Icon",
+                val: '',
+                html: _ => {
+                    return `<input type='url' id='customDeaths' placeholder='Death Icon URL' name='url' style='${textInputStyle}' value='${this.settings.customDeaths.val}' oninput='window.utilities.setSetting("customDeaths", this.value)' style='float:right;margin-top:5px'/>`
+                },
+                set: val => {
+                    deathIcon.src = val.length > 1 ? val : 'https://i.imgur.com/wTEFQRS.png';
                 }
             },
             customBlood: {
                 name: "Death Overlay",
                 val: '',
                 html: _ => {
-                    return `<input type='url' id='customBlood' name='url' value='${self.settings.customBlood.val}' oninput='window.utilities.setSetting("customBlood", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customBlood' placeholder='Death Overlay URL' name='url' style='${textInputStyle}' value='${this.settings.customBlood.val}' oninput='window.utilities.setSetting("customBlood", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
                     bloodDisplay.src = val.length > 1 ? val : location.origin + '/img/blood.png';
@@ -306,7 +260,7 @@ class Utilities {
                 name: "Timer Icon",
                 val: '',
                 html: _ => {
-                    return `<input type='url' id='customTimer' name='url' value='${self.settings.customTimer.val}' oninput='window.utilities.setSetting("customTimer", this.value)' style='float:right;margin-top:5px'/>`
+                    return `<input type='url' id='customTimer' placeholder='Timer Icon URL' name='url' style='${textInputStyle}' value='${this.settings.customTimer.val}' oninput='window.utilities.setSetting("customTimer", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
                     timerIcon.src = val.length > 1 ? val : location.origin + '/img/timer.png';
@@ -354,32 +308,6 @@ class Utilities {
             location = location.origin + "/?game=" + code;
         }
     }
-    
-    changeProfileIcon() {
-        let index = getSavedVal('classindex') || 0;
-        menuMiniProfilePic.src = `${location.origin}/textures/classes/icon_${index}.png`;
-    }
-    
-    createFPSDisplay() {
-        const el = document.createElement("div");
-        el.id = "fps";
-        el.style.position = "absolute";
-        el.style.color = "green";
-        el.style.top = "0.2em";
-        el.style.left = "20px";
-        el.style.fontSize = "8pt";
-        this.fps.elm = el;
-        gameUI.appendChild(el);
-    }
-    
-    updateFPS() {
-        if (!this.settings.showFPS.val) return;
-        let now = performance.now();
-        for (; this.fps.times.length > 0 && this.fps.times[0] <= now - 1e3;) this.fps.times.shift();
-        this.fps.times.push(now);
-        this.fps.elm.innerText = this.fps.times.length;
-        this.fps.elm.style.color = this.fps.times.length > 50 ? 'green' : (this.fps.times.length < 30 ? 'red' : 'orange');
-    }
 
     createDeathCounter() {
         let deathCounter = document.createElement('div');
@@ -419,35 +347,29 @@ class Utilities {
         div.id = 'custCross';
         div.style.display = 'none';
 
-        let crossV = document.createElement('div');
-        crossV.id = 'crossV';
-        crossV.style.cssText = `
+        let crossS = document.createElement('div');
+        crossS.id = 'crossS';
+        crossS.style.cssText = `
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            display: none`;
-        div.appendChild(crossV);
-            
+            display: none;`;
+        div.appendChild(crossS);
+
         let crossH = document.createElement('div');
         crossH.id = 'crossH';
-        crossH.style.cssText = `     
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none`;
+        crossH.style.cssText = crossS.style.cssText;
         div.appendChild(crossH); 
+
+        let crossV = document.createElement('div');
+        crossV.id = 'crossV';
+        crossV.style.cssText = crossS.style.cssText;
+        div.appendChild(crossV);
             
         let crossCirc = document.createElement('div');
         crossCirc.id = 'crossCirc';
-        crossCirc.style.cssText = `  
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            display: none`;
+        crossCirc.style.cssText = crossS.style.cssText;
         div.appendChild(crossCirc); 
             
         let crossImg = document.createElement('div');
@@ -471,16 +393,16 @@ class Utilities {
         if (this.settings.customCrosshair.val == 0 || !this.settings.customCrosshairAlwaysShow.val && (aimDot.style.opacity != "0" || aimRecticle.style.opacity != "0")) return custCross.style.display = 'none';
         custCross.style.display = 'block';
         
+        let shadow = this.hexToRGB(this.settings.customCrosshairShadow.val);
         let thickness = parseInt(this.settings.customCrosshairThickness.val);
         let length = parseInt(this.settings.customCrosshairLength.val);
         let color = this.settings.customCrosshairColor.val;
-        //let outline = parseInt(this.settings.customCrosshairOutline.val);
-        //let outlineColor = this.settings.customCrosshairOutlineColor.val;
         let shape = parseInt(this.settings.customCrosshairShape.val);
 
         if (shape == 0) { // CROSS
             crossV.style.display = 'block';
             crossH.style.display = 'block';
+            crossS.style.display = 'block';
             crossCirc.style.display = 'none';
             crossImg.style.display = 'none';
 
@@ -491,13 +413,18 @@ class Utilities {
             crossH.style.height = `${thickness}px`;
             crossH.style.width = `${length * 2}px`;
             crossH.style.backgroundColor = `${color}`;
-            
-            //if (outline > 0) { }
+            crossH.style.boxShadow = `0px 0px 5px 1px rgba(${shadow.join(',')},0.75)`;
+
+            crossS.style.height = `${length * 2}px`;
+            crossS.style.width = `${thickness}px`;
+            crossS.style.backgroundColor = `${color}`;
+            crossS.style.boxShadow = `0px 0px 5px 1px rgba(${shadow.join(',')},0.75)`;
                 
         } else if (shape == 3) { // IMAGE
         
             crossV.style.display = 'none';
             crossH.style.display = 'none';
+            crossS.style.display = 'none';
             crossCirc.style.display = 'none';
             crossImg.style.display = 'block';
 
@@ -509,16 +436,17 @@ class Utilities {
         
             crossV.style.display = 'none';
             crossH.style.display = 'none';
+            crossS.style.display = 'none';
             crossCirc.style.display = 'block';
             crossImg.style.display = 'none';
 
             crossCirc.style.height = `${length * 2}px`;
             crossCirc.style.width = `${length * 2}px`;
-            crossCirc.style.backgroundColor = shape == 2 ? `${color}` : ``;
-            crossCirc.style.border = shape == 2 ? `` : `${thickness}px solid ${color}`;
-            
-            //if (outline > 0) { }
-            
+            crossCirc.style.backgroundColor = shape == 2 || shape == 5 ? `${color}` : ``;
+            crossCirc.style.border = shape == 2 || shape == 5 ? `` : `${thickness}px solid ${color}`;
+            crossCirc.style.boxShadow = `0px 0px 5px 1px rgba(${shadow.join(',')},0.75)`;
+            crossCirc.style.borderRadius = shape > 3 ? '':'50%';
+
         }
         
     }
@@ -536,35 +464,6 @@ class Utilities {
                 }
             }
         });
-        
-        this.newObserver(windowHolder, 'style', (target) => {
-            this.windowOpened = target.firstElementChild.innerText.length ? true : false;
-            if (!this.windowOpened) {
-                if (['Select Class', 'Change Loadout'].includes(this.lastMenu)) {
-                    this.changeProfileIcon();
-                }
-            }
-        }, false);
-
-        this.newObserver(windowHeader, 'childList', (target) => {
-            if (!this.windowOpened) return;
-            switch (target.innerText) {
-                case 'Server Browser':
-                    if (!this.settings.hideFullMatches.val) return;
-                    if (!document.querySelector('.menuSelectorHolder')) return;
-                    let pcount;
-                    [...document.querySelectorAll('.serverPCount')].filter(el => (pcount = el.innerText.split('/'), pcount[0] == pcount[1])).forEach(el => el.parentElement.remove());
-                    break;
-                case 'Change Loadout':
-                case 'Select Class':
-                    this.changeProfileIcon();
-                    break;
-                default:
-                    //console.log('Unused Window');
-                    break;
-            }
-            this.lastMenu = target.innerText;
-        }, false);
         
         this.newObserver(killCardHolder, 'style', () => {
             this.deaths++;
@@ -626,7 +525,6 @@ class Utilities {
 
     render() {
         this.updateCrosshair();
-        this.updateFPS();
         window.requestAnimationFrame(_ => this.render());
     }
 
@@ -638,30 +536,31 @@ class Utilities {
     }
 
     setSetting(t, e) {
-        if (document.getElementById(`slid_utilities_${t}`)) document.getElementById(`slid_utilities_${t}`).innerHTML = e;
-        if (this.settings[t].set) this.settings[t].set(e);
         this.settings[t].val = e;
         saveVal(`kro_set_utilities_${t}`, e);
+        if (document.getElementById(`slid_utilities_${t}`)) document.getElementById(`slid_utilities_${t}`).innerHTML = e;
+        if (this.settings[t].set) this.settings[t].set(e);
     }
 
     keyDown(event) {
         if (document.activeElement.tagName == "INPUT") return;
-        if (event.keyCode === 9 && !event.ctrlKey && !event.shiftKey) {
-            document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
-            document.exitPointerLock();
-            window.showWindow(window.windows.length);
+        switch(event.key){
+            case '`':
+                if (event.ctrlKey || event.shiftKey) return;
+                document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+                document.exitPointerLock();
+                window.showWindow(window.windows.length);
+                break;
         }
     }
 
     onLoad() {
         this.createCrosshair();
         this.createWatermark();
-        this.createDeathCounter();
-        this.createFPSDisplay();
+        this.createDeathCounter();;
         this.createSettings();
         this.createObservers();
-        this.changeProfileIcon();
-        window.addEventListener("keydown", this.keyDown);
+        window.addEventListener("keydown", event => this.keyDown(event));
         window.requestAnimationFrame(_ => this.render());
     }
 }
