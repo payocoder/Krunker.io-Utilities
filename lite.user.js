@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.4.3
+// @version      0.4.4
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?.+)$/
 // @grant        none
@@ -25,8 +25,7 @@ class Utilities {
 
     createSettings() {
         inviteButton.insertAdjacentHTML("afterend", '\n<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length-1);">Join</div>');
-        const rh = gameNameHolder.lastElementChild;
-        rh.insertAdjacentHTML("beforeend", '<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length);">Utilities</div>');
+        subLogoButtons.insertAdjacentHTML("beforeend", '<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length);">Utilities</div>');
         const selectStyle = `border: none; background: #eee; padding: 4px; float: right; margin-left: 10px;`;
         const textInputStyle = `border: none; background: #eee; padding: 6px; padding-bottom: 6px; float: right;`;
         this.settings = {
