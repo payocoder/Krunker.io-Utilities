@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.4.4
+// @version      0.4.5
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?.+)$/
 // @grant        none
@@ -185,16 +185,6 @@ class Utilities {
                     return `<input type='url' id='customADSDot' placeholder='ADSDot URL' name='url' style='${textInputStyle}' value='${this.settings.customADSDot.val}' oninput='window.utilities.setSetting("customADSDot", this.value)' style='float:right;margin-top:5px'/>`
                 }
             },
-            customScope: {
-                name: "Scope Image",
-                val: '',
-                html: _ => {
-                    return `<input type='url' id='customScope' placeholder='Scope Image URL' name='url' style='${textInputStyle}' value='${this.settings.customScope.val}' oninput='window.utilities.setSetting("customScope", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set: val => {
-                    recticleImg.src = val.length > 1 ? val : location.origin + '/textures/recticle.png';
-                }
-            },
             customScopeHideBoxes: {
                 name: "Hide Black Boxes",
                 val: false,
@@ -213,16 +203,6 @@ class Utilities {
                 },
                 set: val => {
                     ammoIcon.src = val.length > 1 ? val : location.origin + '/textures/ammo_0.png';
-                }
-            },
-            customFlashOverlay: {
-                name: "Muzzle Flash Image",
-                val: '',
-                html: _ => {
-                    return `<input type='url' id='customFlashOverlay' placeholder='Muzzle Flash URL' name='url' style='${textInputStyle}' value='${this.settings.customFlashOverlay.val}' oninput='window.utilities.setSetting("customFlashOverlay", this.value)' style='float:right;margin-top:5px'/>`
-                },
-                set: val => {
-                    flashOverlay.src = val.length > 1 ? val : location.origin + '/img/muzflash.png';
                 }
             },
             customKills: {
@@ -451,10 +431,6 @@ class Utilities {
     }
 
     createObservers() {
-        this.newObserver(crosshair, 'style', (target) => {
-            if (this.settings.customCrosshair.val == 0) return;
-            crosshair.style.opacity = this.crosshairOpacity(crosshair.style.opacity);
-        }, false);
         
         this.newObserver(aimDot, 'src', (target) => {
             if (this.settings.customADSDot.val.length > 1) {
@@ -516,10 +492,6 @@ class Utilities {
         el.style.fontSize = "6pt";
         el.innerHTML = "Krunker.io Utilities Mod";
         gameUI.appendChild(el);
-    }
-
-    crosshairOpacity(val) {
-        return parseInt(this.settings.customCrosshair.val) == 1 ? 0 : val;
     }
 
     render() {
