@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.5.0
+// @version      0.5.1
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?.+)$/
 // @grant        none
@@ -51,16 +51,9 @@ class Utilities {
                     if (val && !challButton.lastElementChild.firstChild.checked) challButton.lastElementChild.firstChild.click();
                 }
             },
-            customADSDot: {
-                name: "ADSDot Image",
-                pre: "<br><div class='setHed'>Customization</div><hr>",
-                val: '',
-                html: _ => {
-                    return `<input type='url' id='customADSDot' placeholder='ADSDot URL' name='url' style='${textInputStyle}' value='${this.settings.customADSDot.val}' oninput='window.utilities.setSetting("customADSDot", this.value)' style='float:right;margin-top:5px'/>`
-                }
-            },
             customAmmo: {
                 name: "Ammo Icon",
+                pre: "<br><div class='setHed'>Customization</div><hr>",
                 val: '',
                 html: _ => {
                     return `<input type='url' id='customAmmo' placeholder='Ammo Icon URL' name='url' style='${textInputStyle}' value='${this.settings.customAmmo.val}' oninput='window.utilities.setSetting("customAmmo", this.value)' style='float:right;margin-top:5px'/>`
@@ -76,7 +69,7 @@ class Utilities {
                     return `<input type='url' id='customKills' placeholder='Kill Icon URL' name='url' style='${textInputStyle}' value='${this.settings.customKills.val}' oninput='window.utilities.setSetting("customKills", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
-                    killsIcon.src = val.length > 1 ? val : location.origin + '/img/skull.png';
+                    killsIcon.src = val.length > 1 ? val : location.origin + '/img/skull_0.png';
                 }
             },
             customDeaths: {
@@ -86,7 +79,7 @@ class Utilities {
                     return `<input type='url' id='customDeaths' placeholder='Death Icon URL' name='url' style='${textInputStyle}' value='${this.settings.customDeaths.val}' oninput='window.utilities.setSetting("customDeaths", this.value)' style='float:right;margin-top:5px'/>`
                 },
                 set: val => {
-                    deathsIcon.src = val.length > 1 ? val : 'https://i.imgur.com/wTEFQRS.png';
+                    deathsIcon.src = val.length > 1 ? val : location.origin + '/img/skull_1.png';
                 }
             },
             customBlood: {
@@ -137,14 +130,6 @@ class Utilities {
     }
 
     createObservers() {
-        this.newObserver(aimDot, 'src', (target) => {
-            if (this.settings.customADSDot.val.length > 1) {
-                if (this.settings.customADSDot.val != target.src) {
-                    target.src = this.settings.customADSDot.val;
-                }
-            }
-        });
-        
         this.newObserver(instructionHolder, 'style', (target) => {
             if (this.settings.autoFindNew.val) {
                 if (target.innerText.includes('Try seeking a new game') &&
