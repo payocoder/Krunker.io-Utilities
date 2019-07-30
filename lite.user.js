@@ -3,7 +3,7 @@
 // @description  Krunker.io Mod
 // @updateURL    https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
 // @downloadURL  https://github.com/Tehchy/Krunker.io-Utilities/raw/master/lite.user.js
-// @version      0.5.1
+// @version      0.5.2
 // @author       Tehchy
 // @include      /^(https?:\/\/)?(www\.)?(.+)krunker\.io(|\/|\/\?.+)$/
 // @grant        none
@@ -18,7 +18,6 @@ class Utilities {
     }
 
     createSettings() {
-        subLogoButtons.insertAdjacentHTML("beforeend", '<div class="button small" onmouseenter="playTick()" onclick="showWindow(window.windows.length);">Utilities</div>');
         const selectStyle = `border: none; background: #eee; padding: 4px; float: right; margin-left: 10px;`;
         const textInputStyle = `border: none; background: #eee; padding: 6px; padding-bottom: 6px; float: right;`;
         this.settings = {
@@ -103,20 +102,18 @@ class Utilities {
                 }
             }
         };
-        window.windows.push({
-            header: "Utilities",
-            gen: _ => {
-                var tmpHTML = "";
-                for (var key in window.utilities.settings) {
-                    if (window.utilities.settings[key].noShow) continue;
-                    if (window.utilities.settings[key].pre) tmpHTML += window.utilities.settings[key].pre;
-                    tmpHTML += "<div class='settName' id='" + key + "_div' style='display:" + (window.utilities.settings[key].hide ? 'none' : 'block') +"'>" + window.utilities.settings[key].name +
-                        " " + window.utilities.settings[key].html() + "</div>";
-                }
-                tmpHTML += "<br><a onclick='window.utilities.resetSettings()' class='menuLink'>Reset Settings</a>";
-                return tmpHTML;
-            }
-        });
+		var old = window.windows[0].gen;
+        window.windows[0].gen = _ => {
+			var tmpHTML = "";
+			for (var key in window.utilities.settings) {
+				if (window.utilities.settings[key].noShow) continue;
+				if (window.utilities.settings[key].pre) tmpHTML += window.utilities.settings[key].pre;
+				tmpHTML += "<div class='settName' id='" + key + "_div' style='display:" + (window.utilities.settings[key].hide ? 'none' : 'block') +"'>" + window.utilities.settings[key].name +
+					" " + window.utilities.settings[key].html() + "</div>";
+			}
+			tmpHTML += "<br><a onclick='window.utilities.resetSettings()' class='menuLink'>Reset Utilities</a>";
+			return old() + tmpHTML;
+        };
         this.setupSettings();
     }
 
